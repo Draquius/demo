@@ -29,8 +29,7 @@
   #demo-bar { background: #0f172a; color: #e2e8f0; font-size: 14px; padding: 8px 0; }
   #demo-bar .container { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
   #demo-bar nav { display: flex; gap: 6px; flex-wrap: wrap; }
-  #demo-bar button { background: #1e293b; color: #e2e8f0; border: 1px solid #334155; border-radius: 999px; padding: 5px 12px; font: inherit; cursor: pointer; }
-  #demo-bar button[aria-pressed="true"] { background: #e2e8f0; color: #0f172a; }
+  #demo-bar select { background: #1e293b; color: #e2e8f0; border: 1px solid #334155; border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 16px; max-width: 100%; }
 
   /* Barra de prévia personalizada (?p=id) */
   #previa-bar { position: sticky; top: 0; z-index: 15; background: #0f172a; color: #e2e8f0; font-size: 14px; padding: 10px 0; }
@@ -257,6 +256,7 @@
   </div>
 </div>
 
+<script src="nichos.js"></script>
 <script>
 /* =====================================================================
    CONFIGURAÇÃO — edite aqui para cada cliente
@@ -265,116 +265,14 @@ const CONFIG = {
   ENDPOINT: 'https://script.google.com/macros/s/AKfycbwFelxYsL1Rk9c_AVEzK8M9rZnTZ1Q201lnlchSykuL7AcueTX5BgsTz5s6Ho3aTQRl/exec', // URL do Apps Script implantado (termina em /exec). Vazio = modo simulação.
   GA4_ID: '',              // ID do Google Analytics 4 (ex.: G-ABC123). Vazio = sem medição.
   MODO_DEMO: true,         // true mostra a barra para trocar de nicho. Use false para cliente real.
-  NICHO_PADRAO: 'oficina', // oficina | estetica | servicos
+  NICHO_PADRAO: 'oficina', // uma das chaves de nichos.js (oficina, desentupidora, barbearia…)
   TIMEOUT_MS: 15000,
   ASSINATURA: 'LeonTech',          // quem assina as prévias personalizadas (?p=id)
   MEU_WHATSAPP: '5531992569221'    // botão "Quero este site" das prévias
 };
 
-const NICHOS = {
-  oficina: {
-    empresa: 'Auto Center Exemplo',
-    cnpj: 'CNPJ 00.000.000/0001-00 (fictício)',
-    cor: '#c2410c', corEscura: '#7c2d12', corClara: '#ffedd5',
-    titulo: 'Oficina mecânica em BH com orçamento rápido pelo WhatsApp',
-    subtitulo: 'Diagnóstico claro, preço combinado antes do serviço e aviso quando o carro estiver pronto.',
-    destaques: ['Orçamento sem compromisso', 'Você aprova antes de qualquer serviço', 'Peças com nota fiscal e garantia'],
-    tituloForm: 'Peça seu orçamento',
-    cta: 'Pedir orçamento',
-    placeholderMensagem: 'Ex.: modelo e ano do carro, barulho ao frear…',
-    introServicos: 'Manutenção preventiva e corretiva para carros de passeio.',
-    servicos: [
-      ['Revisão preventiva', 'Checagem completa conforme o manual do fabricante.'],
-      ['Freios e suspensão', 'Pastilhas, discos, amortecedores e alinhamento.'],
-      ['Injeção eletrônica', 'Diagnóstico por scanner e correção de falhas.'],
-      ['Troca de óleo e filtros', 'Óleo indicado para o seu motor, rápido.'],
-      ['Ar-condicionado', 'Higienização, carga de gás e reparos.'],
-      ['Elétrica automotiva', 'Bateria, alternador, motor de arranque e iluminação.']
-    ],
-    passos: [
-      ['Envie o pedido', 'Pelo formulário ou WhatsApp, conte o que está acontecendo.'],
-      ['Receba o orçamento', 'Avaliamos e enviamos o valor antes de começar.'],
-      ['Aprove e acompanhe', 'Avisamos o andamento e quando o carro estiver pronto.']
-    ],
-    faq: [
-      ['O orçamento é cobrado?', 'Não. O orçamento é sem compromisso; você decide depois de ver o valor.'],
-      ['Vocês dão garantia?', 'Sim. Serviços e peças têm garantia informada por escrito no orçamento.'],
-      ['Precisa agendar?', 'Recomendamos agendar pelo WhatsApp para reduzir o tempo de espera.']
-    ],
-    endereco: 'Rua Exemplo, 123 — Bairro Exemplo, Belo Horizonte/MG',
-    horario: 'Segunda a sexta, 8h às 18h · Sábado, 8h às 12h',
-    whatsapp: '5531992569221',
-    mensagemWhats: 'Olá! Vim pelo site e gostaria de um orçamento para o meu carro.'
-  },
-  estetica: {
-    empresa: 'Studio Exemplo Estética',
-    cnpj: 'CNPJ 00.000.000/0001-00 (fictício)',
-    cor: '#be185d', corEscura: '#831843', corClara: '#fce7f3',
-    titulo: 'Estética em BH com atendimento cuidadoso e horário marcado',
-    subtitulo: 'Avaliação individual para indicar o procedimento certo para você, sem pressa e sem pressão.',
-    destaques: ['Avaliação personalizada', 'Profissionais habilitadas', 'Agendamento fácil pelo WhatsApp'],
-    tituloForm: 'Agende sua avaliação',
-    cta: 'Agendar avaliação',
-    placeholderMensagem: 'Ex.: melhor dia e horário para você…',
-    introServicos: 'Procedimentos estéticos com avaliação prévia.',
-    servicos: [
-      ['Limpeza de pele', 'Higienização profunda com protocolo para o seu tipo de pele.'],
-      ['Design de sobrancelhas', 'Desenho que valoriza o seu rosto.'],
-      ['Drenagem linfática', 'Técnica manual para bem-estar e sensação de leveza.'],
-      ['Massagem relaxante', 'Momento de pausa para aliviar a tensão do dia a dia.'],
-      ['Depilação', 'Atendimento rápido, com cuidado e higiene.'],
-      ['Avaliação estética', 'Conversa inicial para entender o que você procura.']
-    ],
-    passos: [
-      ['Envie o pedido', 'Diga o procedimento e o melhor horário para você.'],
-      ['Confirmamos pelo WhatsApp', 'Retornamos com horários disponíveis e valores.'],
-      ['Venha para a avaliação', 'Indicamos o cuidado adequado antes de começar.']
-    ],
-    faq: [
-      ['Preciso de avaliação antes?', 'Sim. A avaliação garante que o procedimento é adequado para você.'],
-      ['Quais formas de pagamento?', 'Pix, cartão de débito e crédito.'],
-      ['Posso remarcar?', 'Sim, avise pelo WhatsApp com antecedência de 24 horas.']
-    ],
-    endereco: 'Avenida Exemplo, 456 — Sala 10, Belo Horizonte/MG',
-    horario: 'Terça a sábado, 9h às 19h',
-    whatsapp: '5531992569221',
-    mensagemWhats: 'Olá! Vim pelo site e gostaria de agendar uma avaliação.'
-  },
-  servicos: {
-    empresa: 'Exemplo Manutenção Residencial',
-    cnpj: 'CNPJ 00.000.000/0001-00 (fictício)',
-    cor: '#0f766e', corEscura: '#134e4a', corClara: '#ccfbf1',
-    titulo: 'Eletricista e reparos residenciais em BH, com hora marcada',
-    subtitulo: 'Profissional pontual, orçamento antes do serviço e local limpo ao final.',
-    destaques: ['Orçamento sem compromisso', 'Atendimento em toda BH', 'Serviço com garantia'],
-    tituloForm: 'Peça seu orçamento',
-    cta: 'Pedir orçamento',
-    placeholderMensagem: 'Ex.: trocar 3 tomadas e instalar chuveiro, bairro…',
-    introServicos: 'Pequenos e médios reparos para casas, apartamentos e condomínios.',
-    servicos: [
-      ['Elétrica', 'Tomadas, disjuntores, quadros e iluminação.'],
-      ['Hidráulica', 'Vazamentos, torneiras, sifões e caixas acopladas.'],
-      ['Instalações', 'Chuveiros, ventiladores de teto, suportes de TV.'],
-      ['Pintura', 'Retoques e pintura de cômodos.'],
-      ['Pequenos reparos', 'Portas, fechaduras, prateleiras e afins.'],
-      ['Condomínios', 'Manutenção preventiva com visitas programadas.']
-    ],
-    passos: [
-      ['Descreva o serviço', 'Envie fotos e detalhes pelo WhatsApp ou formulário.'],
-      ['Receba o orçamento', 'Valor e prazo combinados antes da visita.'],
-      ['Serviço executado', 'Atendimento no horário marcado e com garantia.']
-    ],
-    faq: [
-      ['Atendem em qual região?', 'Belo Horizonte e região metropolitana, conforme a agenda.'],
-      ['Cobram visita?', 'O orçamento por foto é gratuito; visitas técnicas são combinadas antes.'],
-      ['Dão garantia?', 'Sim, a garantia é informada no orçamento.']
-    ],
-    endereco: 'Atendimento a domicílio — Belo Horizonte/MG',
-    horario: 'Segunda a sábado, 8h às 18h',
-    whatsapp: '5531992569221',
-    mensagemWhats: 'Olá! Vim pelo site e gostaria de um orçamento.'
-  }
-};
+// Os nichos (textos, serviços, cores) ficam em nichos.js, compartilhado com o gerador.
+
 
 /* =====================================================================
    Validação (mesmas regras do backend em apps-script/Codigo.gs)
@@ -434,7 +332,7 @@ function linkWhats(n, extra) {
 }
 
 function aplicarNicho(chave, personalizado) {
-  const n = personalizado || NICHOS[chave] || NICHOS[CONFIG.NICHO_PADRAO];
+  const n = personalizado || NICHOS[chave] || NICHOS[CONFIG.NICHO_PADRAO] || NICHOS.oficina;
   nichoAtual = n;
   const raiz = document.documentElement.style;
   raiz.setProperty('--cor', n.cor);
@@ -475,7 +373,7 @@ function aplicarNicho(chave, personalizado) {
   n.servicos.forEach(([t]) => sel.add(new Option(t, t)));
   sel.add(new Option('Outro', 'Outro'));
 
-  $$('#demo-bar button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.nicho === chave)));
+  const seletor = $('#demo-nicho'); if (seletor && NICHOS[chave]) seletor.value = chave;
 }
 
 function montarBarraDemo(chaveInicial) {
@@ -483,36 +381,56 @@ function montarBarraDemo(chaveInicial) {
   $('#demo-bar').hidden = false;
   $('#aviso-demo').hidden = false;
   const nav = $('#demo-bar nav');
-  const rotulos = { oficina: 'Oficina', estetica: 'Estética', servicos: 'Prestador de serviço' };
-  Object.keys(NICHOS).forEach(k => {
-    const b = document.createElement('button'); b.type = 'button';
-    b.dataset.nicho = k; b.textContent = rotulos[k] || k;
-    b.addEventListener('click', () => {
-      aplicarNicho(k);
-      const url = new URL(location.href); url.searchParams.set('nicho', k);
-      try { history.replaceState(null, '', url); } catch (e) {}
-    });
-    nav.appendChild(b);
+  const sel = document.createElement('select');
+  sel.id = 'demo-nicho'; sel.setAttribute('aria-label', 'Escolher exemplo de nicho');
+  GRUPOS_NICHOS.forEach(g => {
+    const og = document.createElement('optgroup'); og.label = g.nome;
+    g.nichos.filter(k => NICHOS[k]).forEach(k => og.appendChild(new Option(NICHOS[k].rotulo, k)));
+    sel.appendChild(og);
   });
-  $$('#demo-bar button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.nicho === chaveInicial)));
+  sel.value = chaveInicial;
+  sel.addEventListener('change', () => {
+    const k = sel.value;
+    aplicarNicho(k);
+    const url = new URL(location.href); url.searchParams.set('nicho', k);
+    try { history.replaceState(null, '', url); } catch (e) {}
+  });
+  nav.appendChild(sel);
 }
 
 /* ---------- Prévia personalizada (?p=id) ---------- */
 let previaAtual = null;
 
-/** Mistura duas cores #rrggbb (t = 0 → a, t = 1 → b). */
-function misturarCor(a, b, t) {
-  const p = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
-  const [x, y] = [p(a), p(b)];
-  return '#' + x.map((v, i) => Math.round(v + (y[i] - v) * t).toString(16).padStart(2, '0')).join('');
-}
-
-/** Monta o objeto de nicho a partir da config salva pelo gerador. */
+/**
+ * Monta o objeto de nicho a partir da config salva pelo gerador.
+ * A prévia usa o nome de uma empresa REAL, então nada de políticas inventadas
+ * (orçamento grátis, formas de pagamento, horários): destaques, passos e FAQ
+ * são neutros e remetem ao WhatsApp. Nicho desconhecido → null (prévia indisponível).
+ */
 function montarPrevia(cfg) {
-  const base = NICHOS[cfg.nicho] || NICHOS[CONFIG.NICHO_PADRAO];
+  const base = NICHOS[cfg.nicho];
+  if (!base) return null;
   const n = { ...base };
+  const agenda = base.pedido === 'agendamentos';
   n.empresa = cfg.empresa;
   n.cnpj = '';
+  n.subtitulo = `${base.introServicos} Peça pelo formulário ou fale direto pelo WhatsApp.`;
+  n.destaques = [
+    'Atendimento pelo WhatsApp',
+    agenda ? 'Pedido de agendamento em menos de 1 minuto' : 'Pedido de orçamento em menos de 1 minuto',
+    cfg.bairro ? `${cfg.bairro}, Belo Horizonte` : 'Belo Horizonte e região'
+  ];
+  n.passos = [
+    ['Envie o pedido', 'Pelo formulário desta página ou pelo WhatsApp.'],
+    ['Receba o retorno', 'A empresa responde pelo WhatsApp.'],
+    ['Combine os detalhes', agenda ? 'Horários e valores direto com a empresa.' : 'Valores e prazos direto com a empresa.']
+  ];
+  n.faq = [
+    [agenda ? 'Como faço para agendar?' : 'Como peço um orçamento?', 'Pelo formulário desta página ou pelo botão de WhatsApp.'],
+    ['Quais são as formas de pagamento?', 'Consulte a empresa pelo WhatsApp.'],
+    ['Qual é o horário de atendimento?', 'Consulte a empresa pelo WhatsApp.']
+  ];
+  n.horario = 'Consulte o horário pelo WhatsApp';
   if (cfg.bairro) n.titulo = base.titulo.replace(' em BH', ` no bairro ${cfg.bairro}, BH`);
   if (cfg.titulo) n.titulo = cfg.titulo;
   if (cfg.whatsapp) n.whatsapp = cfg.whatsapp;
@@ -552,6 +470,7 @@ async function carregarPrevia(id) {
     const r = await (await fetch(url, { signal: ctrl.signal })).json();
     if (!r.ok || !r.previa) throw new Error(r.mensagem || 'não encontrada');
     const n = montarPrevia(r.previa);
+    if (!n) throw new Error('nicho desconhecido');
     previaAtual = { id, n };
     mostrarBarraPrevia(n);
     aplicarNicho(r.previa.nicho, n);

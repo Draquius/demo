@@ -1,0 +1,619 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Carregando…</title>
+<meta name="description" content="">
+<link rel="icon" href="data:,">
+<style>
+  :root {
+    --cor: #1d4ed8; --cor-escura: #1e3a8a; --cor-clara: #dbeafe;
+    --fundo: #f8fafc; --cartao: #ffffff; --texto: #0f172a; --suave: #475569;
+    --borda: #e2e8f0; --ok: #15803d; --erro: #b91c1c; --whats: #128c7e; --raio: 14px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: var(--texto); background: var(--fundo); line-height: 1.55; }
+  a { color: var(--cor-escura); }
+  .container { width: 100%; max-width: 1100px; margin: 0 auto; padding: 0 16px; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 13px 20px; border-radius: 999px; border: 0; font: inherit; font-weight: 650; text-decoration: none; cursor: pointer; transition: transform .1s, filter .15s; }
+  .btn:hover { filter: brightness(1.08); }
+  .btn:active { transform: scale(.98); }
+  .btn-primario { background: var(--cor); color: #fff; }
+  .btn-whats { background: var(--whats); color: #fff; }
+  .btn-claro { background: #fff; color: var(--cor-escura); }
+  .btn[disabled] { opacity: .6; cursor: progress; }
+
+  /* Barra de demonstração (só aparece com MODO_DEMO) */
+  #demo-bar { background: #0f172a; color: #e2e8f0; font-size: 14px; padding: 8px 0; }
+  #demo-bar .container { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+  #demo-bar nav { display: flex; gap: 6px; flex-wrap: wrap; }
+  #demo-bar button { background: #1e293b; color: #e2e8f0; border: 1px solid #334155; border-radius: 999px; padding: 5px 12px; font: inherit; cursor: pointer; }
+  #demo-bar button[aria-pressed="true"] { background: #e2e8f0; color: #0f172a; }
+
+  header.topo { background: var(--cartao); border-bottom: 1px solid var(--borda); position: sticky; top: 0; z-index: 10; }
+  header.topo .container { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 64px; }
+  .marca { font-weight: 800; font-size: 18px; color: var(--cor-escura); text-decoration: none; }
+  header.topo .btn { padding: 9px 16px; font-size: 15px; }
+
+  .hero { background: linear-gradient(135deg, var(--cor-escura), var(--cor)); color: #fff; padding: 48px 0 56px; }
+  .hero .container { display: grid; grid-template-columns: 1.1fr .9fr; gap: 40px; align-items: start; }
+  .hero h1 { font-size: clamp(28px, 4.2vw, 44px); line-height: 1.12; margin: 0 0 14px; }
+  .hero p.sub { font-size: 18px; opacity: .92; margin: 0 0 20px; }
+  .hero ul { list-style: none; padding: 0; margin: 0 0 26px; display: grid; gap: 8px; }
+  .hero li::before { content: "✓"; display: inline-block; width: 22px; font-weight: 800; }
+  .hero .acoes { display: flex; flex-wrap: wrap; gap: 10px; }
+
+  .card-form { background: var(--cartao); color: var(--texto); border-radius: var(--raio); padding: 24px; box-shadow: 0 20px 40px rgba(15,23,42,.25); }
+  .card-form h2 { margin: 0 0 4px; font-size: 22px; }
+  .card-form p.dica { margin: 0 0 16px; color: var(--suave); font-size: 15px; }
+  .campo { margin-bottom: 14px; }
+  .campo label { display: block; font-weight: 600; font-size: 14px; margin-bottom: 5px; }
+  .campo .opc { font-weight: 400; color: var(--suave); }
+  .campo input, .campo select, .campo textarea { width: 100%; padding: 11px 12px; border: 1.5px solid var(--borda); border-radius: 10px; font: inherit; font-size: 16px; background: #fff; color: var(--texto); }
+  .campo textarea { min-height: 80px; resize: vertical; }
+  .campo input:focus, .campo select:focus, .campo textarea:focus { outline: 3px solid var(--cor-clara); border-color: var(--cor); }
+  .campo.invalido input, .campo.invalido select, .campo.invalido textarea { border-color: var(--erro); }
+  .msg-erro { color: var(--erro); font-size: 13px; margin-top: 4px; min-height: 0; }
+  .consent { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; color: var(--suave); }
+  .consent input { width: 20px; height: 20px; margin-top: 2px; flex: none; }
+  .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+  .card-form .btn { width: 100%; margin-top: 4px; }
+  .aviso { border-radius: 10px; padding: 12px 14px; font-size: 15px; margin-top: 12px; }
+  .aviso.ok { background: #dcfce7; color: #14532d; }
+  .aviso.erro { background: #fee2e2; color: #7f1d1d; }
+  .aviso .btn { margin-top: 10px; }
+
+  section { padding: 56px 0; }
+  section h2.titulo { font-size: clamp(24px, 3vw, 32px); margin: 0 0 8px; }
+  section p.lead { color: var(--suave); margin: 0 0 28px; max-width: 680px; }
+  .grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+  .item { background: var(--cartao); border: 1px solid var(--borda); border-radius: var(--raio); padding: 20px; }
+  .item h3 { margin: 0 0 6px; font-size: 18px; }
+  .item p { margin: 0; color: var(--suave); }
+  .passos { counter-reset: passo; }
+  .passos .item h3::before { counter-increment: passo; content: counter(passo); display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--cor-clara); color: var(--cor-escura); margin-right: 10px; font-size: 15px; }
+  .alt { background: var(--cartao); border-top: 1px solid var(--borda); border-bottom: 1px solid var(--borda); }
+  details { background: var(--fundo); border: 1px solid var(--borda); border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; }
+  details summary { font-weight: 650; cursor: pointer; }
+  details p { margin: 10px 0 0; color: var(--suave); }
+  .local { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .cta-final { background: var(--cor-escura); color: #fff; text-align: center; }
+  .cta-final p { opacity: .9; }
+
+  footer { background: #0f172a; color: #cbd5e1; font-size: 14px; padding: 32px 0 90px; }
+  footer h3 { color: #fff; font-size: 16px; }
+  footer a { color: #e2e8f0; }
+
+  .whats-flutuante { position: fixed; right: 16px; bottom: 16px; z-index: 20; box-shadow: 0 8px 20px rgba(0,0,0,.25); }
+
+  #cookies { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 30; max-width: 560px; background: #fff; color: var(--texto); border: 1px solid var(--borda); border-radius: var(--raio); padding: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.2); font-size: 14px; }
+  #cookies .acoes { display: flex; gap: 8px; margin-top: 10px; }
+  #cookies .btn { padding: 8px 14px; font-size: 14px; }
+  .btn-borda { background: #fff; color: var(--texto); border: 1px solid var(--borda); }
+
+  [hidden] { display: none !important; }
+
+  @media (max-width: 860px) {
+    .hero .container { grid-template-columns: 1fr; gap: 28px; }
+    .local { grid-template-columns: 1fr; }
+    header.topo .btn span.txt { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div id="demo-bar" hidden>
+  <div class="container">
+    <span>Página demonstrativa · empresa fictícia</span>
+    <nav aria-label="Escolher exemplo de nicho"></nav>
+  </div>
+</div>
+
+<header class="topo">
+  <div class="container">
+    <a class="marca" href="#" data-t="empresa"></a>
+    <a class="btn btn-whats js-whats" href="#" target="_blank" rel="noopener" data-evento="clique_whatsapp_topo">💬 <span class="txt">WhatsApp</span></a>
+  </div>
+</header>
+
+<main>
+  <div class="hero">
+    <div class="container">
+      <div>
+        <h1 data-t="titulo"></h1>
+        <p class="sub" data-t="subtitulo"></p>
+        <ul id="destaques"></ul>
+        <div class="acoes">
+          <a class="btn btn-claro" href="#formulario" data-t="cta"></a>
+          <a class="btn btn-whats js-whats" href="#" target="_blank" rel="noopener" data-evento="clique_whatsapp_hero">💬 Falar no WhatsApp</a>
+        </div>
+      </div>
+
+      <div class="card-form" id="formulario">
+        <h2 data-t="tituloForm"></h2>
+        <p class="dica">Respondemos pelo WhatsApp no horário de atendimento.</p>
+        <form id="form-lead" novalidate>
+          <div class="campo" data-campo="nome">
+            <label for="f-nome">Nome</label>
+            <input id="f-nome" name="nome" autocomplete="name" maxlength="80" required>
+            <div class="msg-erro" aria-live="polite"></div>
+          </div>
+          <div class="campo" data-campo="telefone">
+            <label for="f-telefone">WhatsApp / telefone com DDD</label>
+            <input id="f-telefone" name="telefone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(31) 99999-9999" maxlength="20" required>
+            <div class="msg-erro" aria-live="polite"></div>
+          </div>
+          <div class="campo" data-campo="email">
+            <label for="f-email">E-mail <span class="opc">(opcional)</span></label>
+            <input id="f-email" name="email" type="email" autocomplete="email" maxlength="120">
+            <div class="msg-erro" aria-live="polite"></div>
+          </div>
+          <div class="campo" data-campo="servico">
+            <label for="f-servico">Serviço de interesse</label>
+            <select id="f-servico" name="servico" required></select>
+            <div class="msg-erro" aria-live="polite"></div>
+          </div>
+          <div class="campo" data-campo="mensagem">
+            <label for="f-mensagem">Mensagem <span class="opc">(opcional)</span></label>
+            <textarea id="f-mensagem" name="mensagem" maxlength="500" data-t-placeholder="placeholderMensagem"></textarea>
+          </div>
+          <div class="hp" aria-hidden="true">
+            <label for="f-website">Não preencha este campo</label>
+            <input id="f-website" name="website" tabindex="-1" autocomplete="off">
+          </div>
+          <div class="campo" data-campo="consentimento">
+            <label class="consent">
+              <input type="checkbox" id="f-consentimento" name="consentimento">
+              <span>Autorizo o contato pelo telefone/WhatsApp informado para responder este pedido. <a href="#privacidade">Como usamos seus dados</a>.</span>
+            </label>
+            <div class="msg-erro" aria-live="polite"></div>
+          </div>
+          <button class="btn btn-primario" type="submit" id="btn-enviar">Enviar pedido</button>
+          <div id="retorno" role="status" aria-live="polite"></div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <section>
+    <div class="container">
+      <h2 class="titulo">Serviços</h2>
+      <p class="lead" data-t="introServicos"></p>
+      <div class="grade" id="servicos"></div>
+    </div>
+  </section>
+
+  <section class="alt">
+    <div class="container">
+      <h2 class="titulo">Como funciona</h2>
+      <p class="lead">Simples e sem compromisso.</p>
+      <div class="grade passos" id="passos"></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <h2 class="titulo">Perguntas frequentes</h2>
+      <div id="faq" style="max-width: 760px"></div>
+    </div>
+  </section>
+
+  <section class="alt">
+    <div class="container local">
+      <div class="item">
+        <h3>Onde estamos</h3>
+        <p data-t="endereco"></p>
+      </div>
+      <div class="item">
+        <h3>Horário de atendimento</h3>
+        <p data-t="horario"></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-final">
+    <div class="container">
+      <h2 class="titulo">Vamos resolver isso?</h2>
+      <p>Leva menos de um minuto.</p>
+      <a class="btn btn-claro" href="#formulario" data-t="cta"></a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="container">
+    <p><strong data-t="empresa"></strong> · <span data-t="cnpj"></span></p>
+    <h3 id="privacidade">Como usamos seus dados</h3>
+    <p>Os dados enviados neste formulário (nome, telefone, e-mail opcional, serviço e mensagem) são usados somente para responder ao seu pedido de orçamento e acompanhar o atendimento. Não vendemos nem compartilhamos seus dados para fins de publicidade. Você pode pedir a consulta, correção ou exclusão dos seus dados a qualquer momento pelo WhatsApp ou e-mail de contato. Não envie informações de saúde ou outros dados sensíveis pelo formulário.</p>
+    <p id="aviso-demo" hidden>Esta é uma página de demonstração com empresa e dados fictícios.</p>
+  </div>
+</footer>
+
+<a class="btn btn-whats whats-flutuante js-whats" href="#" target="_blank" rel="noopener" aria-label="Falar no WhatsApp" data-evento="clique_whatsapp_flutuante">💬</a>
+
+<div id="cookies" hidden role="dialog" aria-label="Aviso de cookies">
+  Usamos cookies de medição (Google Analytics) para entender como a página é usada. Você aceita?
+  <div class="acoes">
+    <button class="btn btn-primario" id="cookies-aceitar">Aceitar</button>
+    <button class="btn btn-borda" id="cookies-recusar">Recusar</button>
+  </div>
+</div>
+
+<script>
+/* =====================================================================
+   CONFIGURAÇÃO — edite aqui para cada cliente
+   ===================================================================== */
+const CONFIG = {
+  ENDPOINT: 'https://script.google.com/macros/s/AKfycbwFelxYsL1Rk9c_AVEzK8M9rZnTZ1Q201lnlchSykuL7AcueTX5BgsTz5s6Ho3aTQRl/exec', // URL do Apps Script implantado (termina em /exec). Vazio = modo simulação.
+  GA4_ID: '',              // ID do Google Analytics 4 (ex.: G-ABC123). Vazio = sem medição.
+  MODO_DEMO: true,         // true mostra a barra para trocar de nicho. Use false para cliente real.
+  NICHO_PADRAO: 'oficina', // oficina | estetica | servicos
+  TIMEOUT_MS: 15000
+};
+
+const NICHOS = {
+  oficina: {
+    empresa: 'Auto Center Exemplo',
+    cnpj: 'CNPJ 00.000.000/0001-00 (fictício)',
+    cor: '#c2410c', corEscura: '#7c2d12', corClara: '#ffedd5',
+    titulo: 'Oficina mecânica em BH com orçamento rápido pelo WhatsApp',
+    subtitulo: 'Diagnóstico claro, preço combinado antes do serviço e aviso quando o carro estiver pronto.',
+    destaques: ['Orçamento sem compromisso', 'Você aprova antes de qualquer serviço', 'Peças com nota fiscal e garantia'],
+    tituloForm: 'Peça seu orçamento',
+    cta: 'Pedir orçamento',
+    placeholderMensagem: 'Ex.: modelo e ano do carro, barulho ao frear…',
+    introServicos: 'Manutenção preventiva e corretiva para carros de passeio.',
+    servicos: [
+      ['Revisão preventiva', 'Checagem completa conforme o manual do fabricante.'],
+      ['Freios e suspensão', 'Pastilhas, discos, amortecedores e alinhamento.'],
+      ['Injeção eletrônica', 'Diagnóstico por scanner e correção de falhas.'],
+      ['Troca de óleo e filtros', 'Óleo indicado para o seu motor, rápido.'],
+      ['Ar-condicionado', 'Higienização, carga de gás e reparos.'],
+      ['Elétrica automotiva', 'Bateria, alternador, motor de arranque e iluminação.']
+    ],
+    passos: [
+      ['Envie o pedido', 'Pelo formulário ou WhatsApp, conte o que está acontecendo.'],
+      ['Receba o orçamento', 'Avaliamos e enviamos o valor antes de começar.'],
+      ['Aprove e acompanhe', 'Avisamos o andamento e quando o carro estiver pronto.']
+    ],
+    faq: [
+      ['O orçamento é cobrado?', 'Não. O orçamento é sem compromisso; você decide depois de ver o valor.'],
+      ['Vocês dão garantia?', 'Sim. Serviços e peças têm garantia informada por escrito no orçamento.'],
+      ['Precisa agendar?', 'Recomendamos agendar pelo WhatsApp para reduzir o tempo de espera.']
+    ],
+    endereco: 'Rua Exemplo, 123 — Bairro Exemplo, Belo Horizonte/MG',
+    horario: 'Segunda a sexta, 8h às 18h · Sábado, 8h às 12h',
+    whatsapp: '5531900000000',
+    mensagemWhats: 'Olá! Vim pelo site e gostaria de um orçamento para o meu carro.'
+  },
+  estetica: {
+    empresa: 'Studio Exemplo Estética',
+    cnpj: 'CNPJ 00.000.000/0001-00 (fictício)',
+    cor: '#be185d', corEscura: '#831843', corClara: '#fce7f3',
+    titulo: 'Estética em BH com atendimento cuidadoso e horário marcado',
+    subtitulo: 'Avaliação individual para indicar o procedimento certo para você, sem pressa e sem pressão.',
+    destaques: ['Avaliação personalizada', 'Profissionais habilitadas', 'Agendamento fácil pelo WhatsApp'],
+    tituloForm: 'Agende sua avaliação',
+    cta: 'Agendar avaliação',
+    placeholderMensagem: 'Ex.: melhor dia e horário para você…',
+    introServicos: 'Procedimentos estéticos com avaliação prévia.',
+    servicos: [
+      ['Limpeza de pele', 'Higienização profunda com protocolo para o seu tipo de pele.'],
+      ['Design de sobrancelhas', 'Desenho que valoriza o seu rosto.'],
+      ['Drenagem linfática', 'Técnica manual para bem-estar e sensação de leveza.'],
+      ['Massagem relaxante', 'Momento de pausa para aliviar a tensão do dia a dia.'],
+      ['Depilação', 'Atendimento rápido, com cuidado e higiene.'],
+      ['Avaliação estética', 'Conversa inicial para entender o que você procura.']
+    ],
+    passos: [
+      ['Envie o pedido', 'Diga o procedimento e o melhor horário para você.'],
+      ['Confirmamos pelo WhatsApp', 'Retornamos com horários disponíveis e valores.'],
+      ['Venha para a avaliação', 'Indicamos o cuidado adequado antes de começar.']
+    ],
+    faq: [
+      ['Preciso de avaliação antes?', 'Sim. A avaliação garante que o procedimento é adequado para você.'],
+      ['Quais formas de pagamento?', 'Pix, cartão de débito e crédito.'],
+      ['Posso remarcar?', 'Sim, avise pelo WhatsApp com antecedência de 24 horas.']
+    ],
+    endereco: 'Avenida Exemplo, 456 — Sala 10, Belo Horizonte/MG',
+    horario: 'Terça a sábado, 9h às 19h',
+    whatsapp: '5531900000000',
+    mensagemWhats: 'Olá! Vim pelo site e gostaria de agendar uma avaliação.'
+  },
+  servicos: {
+    empresa: 'Exemplo Manutenção Residencial',
+    cnpj: 'CNPJ 00.000.000/0001-00 (fictício)',
+    cor: '#0f766e', corEscura: '#134e4a', corClara: '#ccfbf1',
+    titulo: 'Eletricista e reparos residenciais em BH, com hora marcada',
+    subtitulo: 'Profissional pontual, orçamento antes do serviço e local limpo ao final.',
+    destaques: ['Orçamento sem compromisso', 'Atendimento em toda BH', 'Serviço com garantia'],
+    tituloForm: 'Peça seu orçamento',
+    cta: 'Pedir orçamento',
+    placeholderMensagem: 'Ex.: trocar 3 tomadas e instalar chuveiro, bairro…',
+    introServicos: 'Pequenos e médios reparos para casas, apartamentos e condomínios.',
+    servicos: [
+      ['Elétrica', 'Tomadas, disjuntores, quadros e iluminação.'],
+      ['Hidráulica', 'Vazamentos, torneiras, sifões e caixas acopladas.'],
+      ['Instalações', 'Chuveiros, ventiladores de teto, suportes de TV.'],
+      ['Pintura', 'Retoques e pintura de cômodos.'],
+      ['Pequenos reparos', 'Portas, fechaduras, prateleiras e afins.'],
+      ['Condomínios', 'Manutenção preventiva com visitas programadas.']
+    ],
+    passos: [
+      ['Descreva o serviço', 'Envie fotos e detalhes pelo WhatsApp ou formulário.'],
+      ['Receba o orçamento', 'Valor e prazo combinados antes da visita.'],
+      ['Serviço executado', 'Atendimento no horário marcado e com garantia.']
+    ],
+    faq: [
+      ['Atendem em qual região?', 'Belo Horizonte e região metropolitana, conforme a agenda.'],
+      ['Cobram visita?', 'O orçamento por foto é gratuito; visitas técnicas são combinadas antes.'],
+      ['Dão garantia?', 'Sim, a garantia é informada no orçamento.']
+    ],
+    endereco: 'Atendimento a domicílio — Belo Horizonte/MG',
+    horario: 'Segunda a sábado, 8h às 18h',
+    whatsapp: '5531900000000',
+    mensagemWhats: 'Olá! Vim pelo site e gostaria de um orçamento.'
+  }
+};
+
+/* =====================================================================
+   Validação (mesmas regras do backend em apps-script/Codigo.gs)
+   ===================================================================== */
+function normalizarTelefone(valor) {
+  let dig = String(valor == null ? '' : valor).replace(/\D/g, '').replace(/^0+/, '');
+  if ((dig.length === 12 || dig.length === 13) && dig.startsWith('55')) dig = dig.slice(2);
+  if (dig.length !== 10 && dig.length !== 11) return null;
+  if (dig[0] === '0' || dig[1] === '0') return null;
+  if (dig.length === 11 && dig[2] !== '9') return null;
+  const ddd = dig.slice(0, 2), resto = dig.slice(2);
+  const meio = dig.length === 11 ? 5 : 4;
+  return { digitos: dig, formatado: `(${ddd}) ${resto.slice(0, meio)}-${resto.slice(meio)}` };
+}
+
+function validar(d) {
+  const erros = {};
+  const nome = String(d.nome || '').trim().replace(/\s+/g, ' ');
+  if (nome.length < 2 || nome.length > 80 || !/[A-Za-zÀ-ÿ]/.test(nome)) erros.nome = 'Informe seu nome.';
+  if (!normalizarTelefone(d.telefone)) erros.telefone = 'Informe um telefone com DDD válido.';
+  const email = String(d.email || '').trim();
+  if (email && (email.length > 120 || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email))) erros.email = 'E-mail inválido.';
+  if (!String(d.servico || '').trim() || String(d.servico).length > 80) erros.servico = 'Escolha um serviço.';
+  if (d.consentimento !== true) erros.consentimento = 'Marque a autorização para podermos responder.';
+  return erros;
+}
+
+/* =====================================================================
+   Página
+   ===================================================================== */
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => Array.from(el.querySelectorAll(s));
+let nichoAtual = null;
+
+function armazenamento(tipo) {
+  try { const s = window[tipo]; const k = '__t'; s.setItem(k, k); s.removeItem(k); return s; } catch (e) { return null; }
+}
+const sessao = armazenamento('sessionStorage');
+const local = armazenamento('localStorage');
+
+function lerUtms() {
+  const p = new URLSearchParams(location.search);
+  const chaves = ['utm_source', 'utm_medium', 'utm_campaign'];
+  let salvas = {};
+  try { salvas = JSON.parse((sessao && sessao.getItem('utms')) || '{}'); } catch (e) {}
+  const novas = {};
+  chaves.forEach(k => { if (p.get(k)) novas[k] = p.get(k).slice(0, 100); });
+  const utms = Object.keys(novas).length ? novas : salvas;
+  if (sessao && Object.keys(novas).length) sessao.setItem('utms', JSON.stringify(novas));
+  return utms;
+}
+
+function linkWhats(n, extra) {
+  const texto = extra ? `${n.mensagemWhats} ${extra}` : n.mensagemWhats;
+  return `https://wa.me/${n.whatsapp}?text=${encodeURIComponent(texto)}`;
+}
+
+function aplicarNicho(chave) {
+  const n = NICHOS[chave] || NICHOS[CONFIG.NICHO_PADRAO];
+  nichoAtual = n;
+  const raiz = document.documentElement.style;
+  raiz.setProperty('--cor', n.cor);
+  raiz.setProperty('--cor-escura', n.corEscura);
+  raiz.setProperty('--cor-clara', n.corClara);
+  document.title = `${n.empresa} — ${n.titulo}`;
+  $('meta[name="description"]').setAttribute('content', n.subtitulo);
+
+  $$('[data-t]').forEach(el => { el.textContent = n[el.dataset.t] || ''; });
+  $$('[data-t-placeholder]').forEach(el => { el.placeholder = n[el.dataset.tPlaceholder] || ''; });
+  $$('.js-whats').forEach(a => { a.href = linkWhats(n); });
+
+  const ul = $('#destaques'); ul.replaceChildren();
+  n.destaques.forEach(t => { const li = document.createElement('li'); li.textContent = t; ul.appendChild(li); });
+
+  const montarCartoes = (alvo, lista) => {
+    alvo.replaceChildren();
+    lista.forEach(([titulo, desc]) => {
+      const div = document.createElement('div'); div.className = 'item';
+      const h = document.createElement('h3'); h.textContent = titulo;
+      const p = document.createElement('p'); p.textContent = desc;
+      div.append(h, p); alvo.appendChild(div);
+    });
+  };
+  montarCartoes($('#servicos'), n.servicos);
+  montarCartoes($('#passos'), n.passos);
+
+  const faq = $('#faq'); faq.replaceChildren();
+  n.faq.forEach(([perg, resp]) => {
+    const d = document.createElement('details');
+    const s = document.createElement('summary'); s.textContent = perg;
+    const p = document.createElement('p'); p.textContent = resp;
+    d.append(s, p); faq.appendChild(d);
+  });
+
+  const sel = $('#f-servico'); sel.replaceChildren();
+  const vazio = new Option('Selecione…', ''); sel.add(vazio);
+  n.servicos.forEach(([t]) => sel.add(new Option(t, t)));
+  sel.add(new Option('Outro', 'Outro'));
+
+  $$('#demo-bar button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.nicho === chave)));
+}
+
+function montarBarraDemo(chaveInicial) {
+  if (!CONFIG.MODO_DEMO) return;
+  $('#demo-bar').hidden = false;
+  $('#aviso-demo').hidden = false;
+  const nav = $('#demo-bar nav');
+  const rotulos = { oficina: 'Oficina', estetica: 'Estética', servicos: 'Prestador de serviço' };
+  Object.keys(NICHOS).forEach(k => {
+    const b = document.createElement('button'); b.type = 'button';
+    b.dataset.nicho = k; b.textContent = rotulos[k] || k;
+    b.addEventListener('click', () => {
+      aplicarNicho(k);
+      const url = new URL(location.href); url.searchParams.set('nicho', k);
+      try { history.replaceState(null, '', url); } catch (e) {}
+    });
+    nav.appendChild(b);
+  });
+  $$('#demo-bar button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.nicho === chaveInicial)));
+}
+
+/* ---------- Medição (GA4) com consentimento ---------- */
+function carregarGA() {
+  if (!CONFIG.GA4_ID || window.gtag) return;
+  const s = document.createElement('script');
+  s.async = true; s.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(CONFIG.GA4_ID)}`;
+  document.head.appendChild(s);
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function () { window.dataLayer.push(arguments); };
+  window.gtag('js', new Date());
+  window.gtag('config', CONFIG.GA4_ID);
+}
+function evento(nome, params) {
+  if (typeof window.gtag === 'function') window.gtag('event', nome, params || {});
+}
+function iniciarCookies() {
+  if (!CONFIG.GA4_ID) return;
+  const escolha = local && local.getItem('consentimento_cookies');
+  if (escolha === 'sim') return carregarGA();
+  if (escolha === 'nao') return;
+  const caixa = $('#cookies'); caixa.hidden = false;
+  $('#cookies-aceitar').addEventListener('click', () => { if (local) local.setItem('consentimento_cookies', 'sim'); caixa.hidden = true; carregarGA(); });
+  $('#cookies-recusar').addEventListener('click', () => { if (local) local.setItem('consentimento_cookies', 'nao'); caixa.hidden = true; });
+}
+
+/* ---------- Formulário ---------- */
+function coletar() {
+  const f = $('#form-lead');
+  return {
+    nome: f.nome.value, telefone: f.telefone.value, email: f.email.value,
+    servico: f.servico.value, mensagem: f.mensagem.value,
+    consentimento: f.consentimento.checked, website: f.website.value,
+    pagina: location.origin + location.pathname,
+    ...lerUtms()
+  };
+}
+
+function mostrarErros(erros) {
+  $$('#form-lead .campo[data-campo]').forEach(c => {
+    const msg = erros[c.dataset.campo] || '';
+    c.classList.toggle('invalido', !!msg);
+    const alvo = $('.msg-erro', c); if (alvo) alvo.textContent = msg;
+    const input = $('input, select, textarea', c); if (input) input.setAttribute('aria-invalid', String(!!msg));
+  });
+  const primeiro = Object.keys(erros)[0];
+  if (primeiro) { const el = $(`#f-${primeiro}`); if (el) el.focus(); }
+}
+
+function retorno(tipo, texto, comWhats) {
+  const box = $('#retorno'); box.replaceChildren();
+  if (!tipo) return;
+  const div = document.createElement('div'); div.className = `aviso ${tipo}`;
+  const p = document.createElement('div'); p.textContent = texto; div.appendChild(p);
+  if (comWhats) {
+    const a = document.createElement('a'); a.className = 'btn btn-whats'; a.target = '_blank'; a.rel = 'noopener';
+    a.href = linkWhats(nichoAtual, comWhats); a.textContent = '💬 Continuar no WhatsApp';
+    div.appendChild(a);
+  }
+  box.appendChild(div);
+}
+
+async function enviarLead(dados) {
+  if (!CONFIG.ENDPOINT) {
+    await new Promise(r => setTimeout(r, 500));
+    console.info('[modo simulação] lead que seria enviado:', dados);
+    return { ok: true, simulacao: true };
+  }
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), CONFIG.TIMEOUT_MS);
+  try {
+    // Sem cabeçalho Content-Type: o navegador usa text/plain e evita o bloqueio de CORS do Apps Script.
+    const r = await fetch(CONFIG.ENDPOINT, { method: 'POST', body: JSON.stringify(dados), signal: ctrl.signal, redirect: 'follow' });
+    return await r.json();
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+async function aoEnviar(ev) {
+  ev.preventDefault();
+  const btn = $('#btn-enviar');
+  if (btn.disabled) return;
+  const dados = coletar();
+  const erros = validar(dados);
+  mostrarErros(erros);
+  retorno(null);
+  if (Object.keys(erros).length) return;
+
+  btn.disabled = true; btn.textContent = 'Enviando…';
+  try {
+    const resp = await enviarLead(dados);
+    if (resp && resp.ok) {
+      const primeiroNome = dados.nome.trim().split(/\s+/)[0];
+      retorno('ok', `Obrigado, ${primeiroNome}! Recebemos seu pedido e vamos responder em breve pelo WhatsApp.`,
+        `Meu nome é ${dados.nome.trim()} e tenho interesse em: ${dados.servico}.`);
+      evento('generate_lead', { servico: dados.servico });
+      $('#form-lead').reset();
+      mostrarErros({});
+    } else if (resp && resp.erros) {
+      mostrarErros(resp.erros);
+    } else {
+      throw new Error((resp && resp.mensagem) || 'falha');
+    }
+  } catch (e) {
+    retorno('erro', 'Não conseguimos enviar agora. Tente de novo ou fale direto pelo WhatsApp.',
+      `Meu nome é ${dados.nome.trim()} e tenho interesse em: ${dados.servico}.`);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Enviar pedido';
+  }
+}
+
+function mascaraTelefone(ev) {
+  // Remove 0 de operadora/DDD e o +55 (autopreenchimento do celular) antes de cortar em 11 dígitos.
+  let dig = ev.target.value.replace(/\D/g, '').replace(/^0+/, '');
+  if (dig.length > 11 && dig.startsWith('55')) dig = dig.slice(2);
+  dig = dig.slice(0, 11);
+  let v = dig;
+  if (dig.length > 2) v = `(${dig.slice(0, 2)}) ${dig.slice(2)}`;
+  if (dig.length > 6) v = `(${dig.slice(0, 2)}) ${dig.slice(2, dig.length === 11 ? 7 : 6)}-${dig.slice(dig.length === 11 ? 7 : 6)}`;
+  ev.target.value = v;
+}
+
+/* ---------- Início ---------- */
+(function iniciar() {
+  const pedido = new URLSearchParams(location.search).get('nicho');
+  const chave = (CONFIG.MODO_DEMO && NICHOS[pedido]) ? pedido : CONFIG.NICHO_PADRAO;
+  montarBarraDemo(chave);
+  aplicarNicho(chave);
+  lerUtms();
+  $('#form-lead').addEventListener('submit', aoEnviar);
+  $('#f-telefone').addEventListener('input', mascaraTelefone);
+  $$('.js-whats').forEach(a => a.addEventListener('click', () => evento('clique_whatsapp', { local: a.dataset.evento })));
+  iniciarCookies();
+})();
+
+// Exposto para testes automatizados
+window.LP = { CONFIG, NICHOS, validar, normalizarTelefone, coletar, aplicarNicho };
+</script>
+</body>
+</html>

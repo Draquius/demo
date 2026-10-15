@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Gerador de prévias</title>
+<link rel="icon" href="data:,">
+<style>
+  :root { --cor: #1d4ed8; --cor-clara: #dbeafe; --fundo: #f1f5f9; --cartao: #fff; --texto: #0f172a; --suave: #475569; --borda: #e2e8f0; --ok: #15803d; --erro: #b91c1c; --whats: #128c7e; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; background: var(--fundo); color: var(--texto); line-height: 1.5; }
+  main { max-width: 640px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 22px; margin: 8px 0 4px; }
+  h2 { font-size: 18px; margin: 0 0 12px; }
+  p.sub { color: var(--suave); margin: 0 0 16px; }
+  .cartao { background: var(--cartao); border: 1px solid var(--borda); border-radius: 14px; padding: 16px; margin-bottom: 16px; }
+  label { display: block; font-weight: 600; font-size: 14px; margin: 12px 0 4px; }
+  .opc { font-weight: 400; color: var(--suave); }
+  input, select, textarea { width: 100%; padding: 11px 12px; border: 1.5px solid var(--borda); border-radius: 10px; font: inherit; font-size: 16px; background: #fff; color: var(--texto); }
+  input[type=color] { padding: 2px; height: 44px; }
+  textarea { min-height: 90px; resize: vertical; }
+  input:focus, select:focus, textarea:focus { outline: 3px solid var(--cor-clara); border-color: var(--cor); }
+  .invalido { border-color: var(--erro) !important; }
+  .msg-erro { color: var(--erro); font-size: 13px; min-height: 0; }
+  .linha { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 12px 16px; border-radius: 999px; border: 0; font: inherit; font-weight: 650; cursor: pointer; text-decoration: none; }
+  .btn[disabled] { opacity: .6; cursor: progress; }
+  .primario { background: var(--cor); color: #fff; width: 100%; margin-top: 16px; }
+  .whats { background: var(--whats); color: #fff; }
+  .claro { background: #fff; color: var(--texto); border: 1px solid var(--borda); }
+  .perigo { background: #fff; color: var(--erro); border: 1px solid #fecaca; }
+  .acoes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .acoes .btn { padding: 9px 14px; font-size: 14px; }
+  details summary { cursor: pointer; font-weight: 600; margin-top: 14px; color: var(--cor); }
+  .link { word-break: break-all; background: var(--fundo); border-radius: 8px; padding: 10px; font-family: ui-monospace, Consolas, monospace; font-size: 14px; }
+  .aviso { border-radius: 10px; padding: 10px 12px; font-size: 14px; margin-top: 12px; }
+  .aviso.ok { background: #dcfce7; color: #14532d; }
+  .aviso.erro { background: #fee2e2; color: #7f1d1d; }
+  .previa { border-top: 1px solid var(--borda); padding: 12px 0; }
+  .previa:first-child { border-top: 0; padding-top: 0; }
+  .previa strong { display: block; }
+  .meta { color: var(--suave); font-size: 13px; }
+  .vistas { display: inline-block; background: var(--cor-clara); color: var(--cor); border-radius: 999px; padding: 1px 10px; font-size: 13px; font-weight: 650; }
+  .vistas.zero { background: var(--fundo); color: var(--suave); }
+  [hidden] { display: none !important; }
+  @media (max-width: 480px) { .linha { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Gerador de prévias</h1>
+  <p class="sub">Crie em 2 minutos uma prévia do site para um prospect e mande o link pelo WhatsApp.</p>
+
+  <!-- Configuração (chave do gerador + seu nome) -->
+  <section class="cartao" id="sec-config">
+    <h2>Configuração</h2>
+    <p class="meta">A chave aparece no Apps Script ao executar <code>definirChavePrevias</code>. Fica salva só neste aparelho.</p>
+    <label for="c-chave">Chave do gerador</label>
+    <input id="c-chave" type="password" autocomplete="off" spellcheck="false">
+    <label for="c-nome">Seu nome <span class="opc">(vai na mensagem)</span></label>
+    <input id="c-nome" maxlength="40" value="Leonardo">
+    <button class="btn primario" id="c-salvar" type="button">Salvar e continuar</button>
+    <div id="c-retorno"></div>
+  </section>
+
+  <!-- Nova prévia -->
+  <section class="cartao" id="sec-nova" hidden>
+    <h2>Nova prévia</h2>
+    <form id="f" novalidate>
+      <label for="f-empresa">Nome da empresa</label>
+      <input id="f-empresa" maxlength="60" autocomplete="off" placeholder="Ex.: Auto Center São José">
+      <div class="msg-erro" data-erro="empresa"></div>
+
+      <div class="linha">
+        <div>
+          <label for="f-nicho">Nicho</label>
+          <select id="f-nicho">
+            <option value="oficina">Oficina</option>
+            <option value="estetica">Estética</option>
+            <option value="servicos">Prestador de serviço</option>
+          </select>
+          <div class="msg-erro" data-erro="nicho"></div>
+        </div>
+        <div>
+          <label for="f-bairro">Bairro <span class="opc">(opcional)</span></label>
+          <input id="f-bairro" maxlength="40" placeholder="Ex.: Barreiro">
+        </div>
+      </div>
+
+      <div class="linha">
+        <div>
+          <label for="f-whatsapp">WhatsApp da empresa <span class="opc">(opcional)</span></label>
+          <input id="f-whatsapp" type="tel" inputmode="tel" placeholder="(31) 99999-9999" maxlength="20">
+          <div class="msg-erro" data-erro="whatsapp"></div>
+        </div>
+        <div>
+          <label for="f-cor">Cor da marca <span class="opc">(opcional)</span></label>
+          <input id="f-cor" type="color" value="#c2410c">
+          <div class="msg-erro" data-erro="cor"></div>
+        </div>
+      </div>
+
+      <details>
+        <summary>Mais detalhes (opcional)</summary>
+        <label for="f-titulo">Título da página</label>
+        <input id="f-titulo" maxlength="90" placeholder="Em branco = título padrão do nicho com o bairro">
+        <label for="f-endereco">Endereço</label>
+        <input id="f-endereco" maxlength="120">
+        <label for="f-horario">Horário</label>
+        <input id="f-horario" maxlength="80" placeholder="Ex.: Seg a sex, 8h às 18h">
+        <label for="f-servicos">Serviços <span class="opc">(um por linha: Serviço | descrição curta; máx. 8)</span></label>
+        <textarea id="f-servicos" placeholder="Troca de óleo | Rápida, com óleo indicado para o seu motor"></textarea>
+      </details>
+
+      <button class="btn primario" id="f-gerar" type="submit">Gerar prévia</button>
+      <div id="f-retorno"></div>
+    </form>
+  </section>
+
+  <!-- Resultado -->
+  <section class="cartao" id="sec-resultado" hidden>
+    <h2>Prévia pronta ✓</h2>
+    <div class="link" id="r-link"></div>
+    <div class="acoes">
+      <a class="btn whats" id="r-enviar" target="_blank" rel="noopener">💬 Enviar pelo WhatsApp</a>
+      <button class="btn claro" type="button" id="r-copiar-msg">Copiar mensagem</button>
+      <button class="btn claro" type="button" id="r-copiar-link">Copiar link</button>
+      <a class="btn claro" id="r-abrir" target="_blank" rel="noopener">Abrir prévia</a>
+    </div>
+    <label for="r-msg">Mensagem <span class="opc">(pode editar antes de copiar; personalize a 1ª linha)</span></label>
+    <textarea id="r-msg" rows="7"></textarea>
+    <div id="r-retorno"></div>
+  </section>
+
+  <!-- Lista -->
+  <section class="cartao" id="sec-lista" hidden>
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+      <h2 style="margin:0">Minhas prévias</h2>
+      <button class="btn claro" type="button" id="l-atualizar" style="padding:7px 12px; font-size:14px">Atualizar</button>
+    </div>
+    <p class="meta">Visitas contam quando o prospect abre o link (as suas, deste aparelho, não contam).</p>
+    <div id="l-itens"></div>
+  </section>
+
+  <p class="meta"><button class="btn claro" type="button" id="trocar-chave" style="padding:6px 12px; font-size:13px">Trocar chave / sair deste aparelho</button></p>
+</main>
+
+<script>
+const ENDPOINT = 'https://script.google.com/macros/s/AKfycbwFelxYsL1Rk9c_AVEzK8M9rZnTZ1Q201lnlchSykuL7AcueTX5BgsTz5s6Ho3aTQRl/exec';
+const BASE_PREVIA = location.origin + location.pathname.replace(/gerador\.html$/, '');
+const CORES_PADRAO = { oficina: '#c2410c', estetica: '#be185d', servicos: '#0f766e' };
+
+const $ = s => document.querySelector(s);
+const guardar = (() => { try { const s = localStorage; s.setItem('__t', '1'); s.removeItem('__t'); return s; } catch (e) { return null; } })();
+const ler = k => (guardar && guardar.getItem(k)) || '';
+const salvar = (k, v) => { if (guardar) { if (v) guardar.setItem(k, v); else guardar.removeItem(k); } };
+
+let chave = ler('chave_previas');
+let corAlterada = false;
+
+async function api(dados) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 20000);
+  try {
+    const r = await fetch(ENDPOINT, { method: 'POST', body: JSON.stringify({ chave, ...dados }), signal: ctrl.signal });
+    const texto = await r.text();
+    // Quando o Apps Script falha, ele devolve uma página HTML em vez de JSON.
+    try { return JSON.parse(texto); } catch (e) { return { ok: false, mensagem: 'Erro no servidor (Apps Script). Confira a implantação e a planilha.' }; }
+  } finally { clearTimeout(t); }
+}
+
+function aviso(alvo, tipo, texto) {
+  const box = $(alvo); box.replaceChildren();
+  if (!tipo) return;
+  const d = document.createElement('div'); d.className = `aviso ${tipo}`; d.textContent = texto; box.appendChild(d);
+}
+
+function mostrarTelas() {
+  const temChave = !!chave;
+  $('#sec-config').hidden = temChave;
+  $('#sec-nova').hidden = !temChave;
+  $('#sec-lista').hidden = !temChave;
+  $('#trocar-chave').hidden = !temChave;
+  if (temChave) listar();
+}
+
+/* ---------- Configuração ---------- */
+$('#c-salvar').addEventListener('click', async () => {
+  const tentativa = $('#c-chave').value.trim();
+  if (!tentativa) return aviso('#c-retorno', 'erro', 'Cole a chave do gerador.');
+  const btn = $('#c-salvar'); btn.disabled = true; btn.textContent = 'Verificando…';
+  try {
+    const anterior = chave; chave = tentativa;
+    const r = await api({ acao: 'verificarChave' });
+    if (!r.ok) { chave = anterior; return aviso('#c-retorno', 'erro', r.mensagem || 'Chave inválida.'); }
+    salvar('chave_previas', chave);
+    salvar('seu_nome', $('#c-nome').value.trim());
+    salvar('dono_previas', '1'); // a landing não conta as visitas feitas deste aparelho
+    $('#c-chave').value = '';
+    aviso('#c-retorno', null);
+    mostrarTelas();
+  } catch (e) {
+    aviso('#c-retorno', 'erro', 'Sem conexão com o servidor. Tente de novo.');
+  } finally { btn.disabled = false; btn.textContent = 'Salvar e continuar'; }
+});
+$('#trocar-chave').addEventListener('click', () => { chave = ''; salvar('chave_previas', ''); $('#c-nome').value = ler('seu_nome') || 'Leonardo'; mostrarTelas(); });
+
+/* ---------- Formulário ---------- */
+$('#f-nicho').addEventListener('change', () => { if (!corAlterada) $('#f-cor').value = CORES_PADRAO[$('#f-nicho').value]; });
+$('#f-cor').addEventListener('input', () => { corAlterada = true; });
+$('#f-whatsapp').addEventListener('input', ev => {
+  let d = ev.target.value.replace(/\D/g, '').replace(/^0+/, '');
+  if (d.length > 11 && d.startsWith('55')) d = d.slice(2);
+  d = d.slice(0, 11);
+  ev.target.value = d.length > 6 ? `(${d.slice(0, 2)}) ${d.slice(2, d.length - 4)}-${d.slice(-4)}` : d.length > 2 ? `(${d.slice(0, 2)}) ${d.slice(2)}` : d;
+});
+
+function lerServicos(texto) {
+  return texto.split('\n').map(l => l.trim()).filter(Boolean).slice(0, 8).map(l => {
+    const [nome, ...resto] = l.split('|');
+    return [nome.trim(), resto.join('|').trim()];
+  }).filter(s => s[0]);
+}
+
+function whatsDigitos(v) {
+  const d = v.replace(/\D/g, '');
+  if (!d) return '';
+  return d.startsWith('55') && d.length >= 12 ? d : '55' + d;
+}
+
+function coletarPrevia() {
+  return {
+    empresa: $('#f-empresa').value.trim(),
+    nicho: $('#f-nicho').value,
+    bairro: $('#f-bairro').value.trim(),
+    whatsapp: whatsDigitos($('#f-whatsapp').value),
+    cor: corAlterada ? $('#f-cor').value : '',
+    titulo: $('#f-titulo').value.trim(),
+    endereco: $('#f-endereco').value.trim(),
+    horario: $('#f-horario').value.trim(),
+    servicos: lerServicos($('#f-servicos').value)
+  };
+}
+
+function marcarErros(erros) {
+  document.querySelectorAll('[data-erro]').forEach(el => {
+    const msg = erros[el.dataset.erro] || '';
+    el.textContent = msg;
+    const campo = $(`#f-${el.dataset.erro}`); if (campo) campo.classList.toggle('invalido', !!msg);
+  });
+}
+
+function mensagemPara(empresa, link) {
+  const nome = ler('seu_nome') || 'Leonardo';
+  return `Oi, tudo bem? Sou ${nome}, desenvolvedor aqui de BH. Vi a ${empresa} no Google e montei uma prévia de como poderia ficar uma página para receber pedidos de orçamento direto no WhatsApp de vocês:\n\n${link}\n\nSe fizer sentido, te explico em 10 minutos como funciona. Se não for o momento, sem problema: é só me avisar que não mando mais mensagem.`;
+}
+
+$('#f').addEventListener('submit', async ev => {
+  ev.preventDefault();
+  const p = coletarPrevia();
+  const erros = {};
+  if (p.empresa.length < 2) erros.empresa = 'Informe o nome da empresa.';
+  if (p.whatsapp && !/^55\d{10,11}$/.test(p.whatsapp)) erros.whatsapp = 'Telefone com DDD inválido.';
+  marcarErros(erros);
+  aviso('#f-retorno', null);
+  if (Object.keys(erros).length) return;
+
+  const btn = $('#f-gerar'); btn.disabled = true; btn.textContent = 'Gerando…';
+  try {
+    const r = await api({ acao: 'criarPrevia', previa: p });
+    if (r.chaveInvalida) { chave = ''; salvar('chave_previas', ''); mostrarTelas(); return aviso('#c-retorno', 'erro', 'A chave mudou. Cole a nova chave.'); }
+    if (!r.ok) { if (r.erros) marcarErros(r.erros); return aviso('#f-retorno', 'erro', r.mensagem || 'Confira os campos marcados.'); }
+    mostrarResultado(p, r.id);
+    $('#f').reset(); corAlterada = false; $('#f-cor').value = CORES_PADRAO.oficina;
+    listar();
+  } catch (e) {
+    aviso('#f-retorno', 'erro', 'Sem conexão com o servidor. Tente de novo.');
+  } finally { btn.disabled = false; btn.textContent = 'Gerar prévia'; }
+});
+
+/* ---------- Resultado ---------- */
+let resultado = null;
+function linkDaPrevia(id) { return `${BASE_PREVIA}?p=${encodeURIComponent(id)}`; }
+
+function mostrarResultado(p, id) {
+  const link = linkDaPrevia(id);
+  resultado = { p, id, link };
+  $('#r-link').textContent = link;
+  $('#r-abrir').href = link;
+  $('#r-msg').value = mensagemPara(p.empresa, link);
+  atualizarBotaoEnviar();
+  aviso('#r-retorno', null);
+  $('#sec-resultado').hidden = false;
+  $('#sec-resultado').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function atualizarBotaoEnviar() {
+  if (!resultado) return;
+  const texto = encodeURIComponent($('#r-msg').value);
+  $('#r-enviar').href = resultado.p.whatsapp ? `https://wa.me/${resultado.p.whatsapp}?text=${texto}` : `https://wa.me/?text=${texto}`;
+}
+$('#r-msg').addEventListener('input', atualizarBotaoEnviar);
+
+async function copiar(texto, onde) {
+  try { await navigator.clipboard.writeText(texto); }
+  catch (e) {
+    const t = document.createElement('textarea'); t.value = texto; t.style.position = 'fixed'; t.style.opacity = '0';
+    document.body.appendChild(t); t.select(); try { document.execCommand('copy'); } catch (e2) {} t.remove();
+  }
+  aviso(onde, 'ok', 'Copiado!');
+}
+$('#r-copiar-msg').addEventListener('click', () => copiar($('#r-msg').value, '#r-retorno'));
+$('#r-copiar-link').addEventListener('click', () => copiar(resultado.link, '#r-retorno'));
+
+/* ---------- Lista ---------- */
+function dataCurta(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return isNaN(d) ? '' : d.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+
+async function listar() {
+  const box = $('#l-itens');
+  box.textContent = 'Carregando…';
+  try {
+    const r = await api({ acao: 'listarPrevias' });
+    if (r.chaveInvalida) { chave = ''; salvar('chave_previas', ''); return mostrarTelas(); }
+    if (!r.ok) { box.textContent = r.mensagem || 'Erro ao carregar.'; return; }
+    box.replaceChildren();
+    if (!r.previas.length) { box.textContent = 'Nenhuma prévia ainda.'; return; }
+    r.previas.forEach(p => box.appendChild(itemPrevia(p)));
+  } catch (e) { box.textContent = 'Sem conexão com o servidor.'; }
+}
+
+function itemPrevia(p) {
+  const div = document.createElement('div'); div.className = 'previa';
+  const nome = document.createElement('strong'); nome.textContent = p.empresa;
+  const vistas = document.createElement('span');
+  vistas.className = 'vistas' + (p.visualizacoes ? '' : ' zero');
+  vistas.textContent = p.visualizacoes ? `👀 ${p.visualizacoes} visita${p.visualizacoes > 1 ? 's' : ''}` : 'ainda não abriu';
+  const meta = document.createElement('div'); meta.className = 'meta';
+  meta.textContent = `criada ${dataCurta(p.criada)}` + (p.ultimaVisualizacao ? ` · última visita ${dataCurta(p.ultimaVisualizacao)}` : '');
+  const acoes = document.createElement('div'); acoes.className = 'acoes';
+  const abrir = document.createElement('a'); abrir.className = 'btn claro'; abrir.textContent = 'Abrir';
+  abrir.href = linkDaPrevia(p.id); abrir.target = '_blank'; abrir.rel = 'noopener';
+  const copiarBtn = document.createElement('button'); copiarBtn.type = 'button'; copiarBtn.className = 'btn claro'; copiarBtn.textContent = 'Copiar link';
+  const retornoItem = document.createElement('div'); retornoItem.id = 'ret-' + p.id;
+  copiarBtn.addEventListener('click', () => copiar(linkDaPrevia(p.id), '#' + CSS.escape(retornoItem.id)));
+  const apagar = document.createElement('button'); apagar.type = 'button'; apagar.className = 'btn perigo'; apagar.textContent = 'Apagar';
+  apagar.addEventListener('click', async () => {
+    if (apagar.dataset.confirmar !== '1') { apagar.dataset.confirmar = '1'; apagar.textContent = 'Confirmar?'; return; }
+    apagar.disabled = true;
+    try {
+      const r = await api({ acao: 'apagarPrevia', id: p.id });
+      if (r.ok) div.remove();
+      else if (r.chaveInvalida) { chave = ''; salvar('chave_previas', ''); mostrarTelas(); aviso('#c-retorno', 'erro', 'A chave mudou. Cole a nova chave.'); }
+      else { apagar.textContent = 'Erro'; aviso('#' + CSS.escape(retornoItem.id), 'erro', r.mensagem || 'Não foi possível apagar.'); }
+    }
+    catch (e) { apagar.textContent = 'Erro'; apagar.disabled = false; }
+  });
+  acoes.append(abrir, copiarBtn, apagar);
+  const topo = document.createElement('div'); topo.style.cssText = 'display:flex; justify-content:space-between; gap:8px; align-items:start';
+  topo.append(nome, vistas);
+  div.append(topo, meta, acoes, retornoItem);
+  return div;
+}
+$('#l-atualizar').addEventListener('click', listar);
+
+/* ---------- Início ---------- */
+$('#c-nome').value = ler('seu_nome') || 'Leonardo';
+mostrarTelas();
+// Exposto para testes automatizados
+window.GERADOR = { coletarPrevia, lerServicos, whatsDigitos, mensagemPara, linkDaPrevia, listar, get chave() { return chave; } };
+</script>
+</body>
+</html>

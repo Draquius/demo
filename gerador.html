@@ -75,11 +75,7 @@
       <div class="linha">
         <div>
           <label for="f-nicho">Nicho</label>
-          <select id="f-nicho">
-            <option value="oficina">Oficina</option>
-            <option value="estetica">Estética</option>
-            <option value="servicos">Prestador de serviço</option>
-          </select>
+          <select id="f-nicho"></select>
           <div class="msg-erro" data-erro="nicho"></div>
         </div>
         <div>
@@ -96,7 +92,7 @@
         </div>
         <div>
           <label for="f-cor">Cor da marca <span class="opc">(opcional)</span></label>
-          <input id="f-cor" type="color" value="#c2410c">
+          <input id="f-cor" type="color">
           <div class="msg-erro" data-erro="cor"></div>
         </div>
       </div>
@@ -146,10 +142,18 @@
   <p class="meta"><button class="btn claro" type="button" id="trocar-chave" style="padding:6px 12px; font-size:13px">Trocar chave / sair deste aparelho</button></p>
 </main>
 
+<script src="nichos.js"></script>
 <script>
 const ENDPOINT = 'https://script.google.com/macros/s/AKfycbwFelxYsL1Rk9c_AVEzK8M9rZnTZ1Q201lnlchSykuL7AcueTX5BgsTz5s6Ho3aTQRl/exec';
 const BASE_PREVIA = location.origin + location.pathname.replace(/gerador\.html$/, '');
-const CORES_PADRAO = { oficina: '#c2410c', estetica: '#be185d', servicos: '#0f766e' };
+const corPadrao = k => (NICHOS[k] || NICHOS.oficina).cor;
+
+// Seletor de nicho agrupado (vem de nichos.js).
+GRUPOS_NICHOS.forEach(g => {
+  const og = document.createElement('optgroup'); og.label = g.nome;
+  g.nichos.filter(k => NICHOS[k]).forEach(k => og.appendChild(new Option(NICHOS[k].rotulo, k)));
+  document.getElementById('f-nicho').appendChild(og);
+});
 
 const $ = s => document.querySelector(s);
 const guardar = (() => { try { const s = localStorage; s.setItem('__t', '1'); s.removeItem('__t'); return s; } catch (e) { return null; } })();
@@ -207,7 +211,7 @@ $('#c-salvar').addEventListener('click', async () => {
 $('#trocar-chave').addEventListener('click', () => { chave = ''; salvar('chave_previas', ''); $('#c-nome').value = ler('seu_nome') || 'Leonardo'; mostrarTelas(); });
 
 /* ---------- Formulário ---------- */
-$('#f-nicho').addEventListener('change', () => { if (!corAlterada) $('#f-cor').value = CORES_PADRAO[$('#f-nicho').value]; });
+$('#f-nicho').addEventListener('change', () => { if (!corAlterada) $('#f-cor').value = corPadrao($('#f-nicho').value); });
 $('#f-cor').addEventListener('input', () => { corAlterada = true; });
 $('#f-whatsapp').addEventListener('input', ev => {
   let d = ev.target.value.replace(/\D/g, '').replace(/^0+/, '');
@@ -251,9 +255,10 @@ function marcarErros(erros) {
   });
 }
 
-function mensagemPara(empresa, link) {
+function mensagemPara(empresa, link, nicho) {
   const nome = ler('seu_nome') || 'Leonardo';
-  return `Oi, tudo bem? Sou ${nome}, desenvolvedor aqui de BH. Vi a ${empresa} no Google e montei uma prévia de como poderia ficar uma página para receber pedidos de orçamento direto no WhatsApp de vocês:\n\n${link}\n\nSe fizer sentido, te explico em 10 minutos como funciona. Se não for o momento, sem problema: é só me avisar que não mando mais mensagem.`;
+  const pedido = (NICHOS[nicho] || NICHOS.oficina).pedido || 'pedidos de orçamento';
+  return `Oi, tudo bem? Sou ${nome}, desenvolvedor aqui de BH. Vi a ${empresa} no Google e montei uma prévia de como poderia ficar uma página para receber ${pedido} direto no WhatsApp de vocês:\n\n${link}\n\nSe fizer sentido, te explico em 10 minutos como funciona. Se não for o momento, sem problema: é só me avisar que não mando mais mensagem.`;
 }
 
 $('#f').addEventListener('submit', async ev => {
@@ -272,7 +277,7 @@ $('#f').addEventListener('submit', async ev => {
     if (r.chaveInvalida) { chave = ''; salvar('chave_previas', ''); mostrarTelas(); return aviso('#c-retorno', 'erro', 'A chave mudou. Cole a nova chave.'); }
     if (!r.ok) { if (r.erros) marcarErros(r.erros); return aviso('#f-retorno', 'erro', r.mensagem || 'Confira os campos marcados.'); }
     mostrarResultado(p, r.id);
-    $('#f').reset(); corAlterada = false; $('#f-cor').value = CORES_PADRAO.oficina;
+    $('#f').reset(); corAlterada = false; $('#f-cor').value = corPadrao($('#f-nicho').value);
     listar();
   } catch (e) {
     aviso('#f-retorno', 'erro', 'Sem conexão com o servidor. Tente de novo.');
@@ -288,7 +293,7 @@ function mostrarResultado(p, id) {
   resultado = { p, id, link };
   $('#r-link').textContent = link;
   $('#r-abrir').href = link;
-  $('#r-msg').value = mensagemPara(p.empresa, link);
+  $('#r-msg').value = mensagemPara(p.empresa, link, p.nicho);
   atualizarBotaoEnviar();
   aviso('#r-retorno', null);
   $('#sec-resultado').hidden = false;
@@ -368,6 +373,7 @@ $('#l-atualizar').addEventListener('click', listar);
 
 /* ---------- Início ---------- */
 $('#c-nome').value = ler('seu_nome') || 'Leonardo';
+$('#f-cor').value = corPadrao($('#f-nicho').value);
 mostrarTelas();
 // Exposto para testes automatizados
 window.GERADOR = { coletarPrevia, lerServicos, whatsDigitos, mensagemPara, linkDaPrevia, listar, get chave() { return chave; } };

@@ -97,6 +97,20 @@
         </div>
       </div>
 
+      <div class="linha">
+        <div>
+          <label for="f-nota">Nota no Google <span class="opc">(opcional)</span></label>
+          <input id="f-nota" inputmode="decimal" maxlength="3" placeholder="Ex.: 4,8">
+          <div class="msg-erro" data-erro="nota"></div>
+        </div>
+        <div>
+          <label for="f-avaliacoes">Nº de avaliações</label>
+          <input id="f-avaliacoes" inputmode="numeric" maxlength="7" placeholder="Ex.: 120">
+          <div class="msg-erro" data-erro="avaliacoes"></div>
+        </div>
+      </div>
+      <p class="meta" style="margin:4px 0 0">Copie do perfil da empresa no Google Maps. Em branco = a prévia não mostra estrelas (nunca invente a nota).</p>
+
       <details>
         <summary>Mais detalhes (opcional)</summary>
         <label for="f-titulo">Título da página</label>
@@ -243,6 +257,8 @@ function coletarPrevia() {
     titulo: $('#f-titulo').value.trim(),
     endereco: $('#f-endereco').value.trim(),
     horario: $('#f-horario').value.trim(),
+    nota: $('#f-nota').value.trim(),
+    avaliacoes: $('#f-avaliacoes').value.trim(),
     servicos: lerServicos($('#f-servicos').value)
   };
 }
@@ -267,6 +283,10 @@ $('#f').addEventListener('submit', async ev => {
   const erros = {};
   if (p.empresa.length < 2) erros.empresa = 'Informe o nome da empresa.';
   if (p.whatsapp && !/^55\d{10,11}$/.test(p.whatsapp)) erros.whatsapp = 'Telefone com DDD inválido.';
+  const nota = p.nota ? Number(p.nota.replace(',', '.')) : null;
+  if (p.nota && !(nota >= 1 && nota <= 5)) erros.nota = 'Nota de 1 a 5 (ex.: 4,8).';
+  if (p.avaliacoes && !/^(\d{1,3}(\.\d{3})+|\d+)$/.test(p.avaliacoes)) erros.avaliacoes = 'Só números (ex.: 120 ou 1.234).';
+  if (!erros.avaliacoes && !!p.nota !== !!p.avaliacoes) erros[p.nota ? 'avaliacoes' : 'nota'] = 'Preencha nota e avaliações juntas.';
   marcarErros(erros);
   aviso('#f-retorno', null);
   if (Object.keys(erros).length) return;

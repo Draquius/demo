@@ -56,6 +56,23 @@
   .consent { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; font-weight: 400; color: var(--suave); margin-top: 10px; }
   .consent input { width: 20px; height: 20px; margin-top: 2px; flex: none; }
   .amostra { display: inline-block; width: 14px; height: 14px; border-radius: 4px; vertical-align: -2px; margin: 0 4px; border: 1px solid var(--borda); }
+  /* Meta e funil */
+  .meta-numeros { font-size: 15px; color: var(--suave); }
+  .meta-numeros strong { font-size: 28px; color: var(--texto); }
+  .barra { height: 12px; border-radius: 999px; background: var(--fundo); border: 1px solid var(--borda); overflow: hidden; margin: 8px 0 6px; }
+  .barra span { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #22c55e, #15803d); transition: width .5s; }
+  .etapas { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .chip { display: inline-flex; align-items: center; gap: 4px; border-radius: 999px; padding: 3px 10px; font-size: 13px; font-weight: 650; background: var(--fundo); color: var(--suave); border: 1px solid var(--borda); }
+  .chip b { color: var(--texto); }
+  .e-criada { background: #f1f5f9; } .e-enviada { background: #e0f2fe; } .e-abriu { background: #fef3c7; }
+  .e-respondeu { background: #ede9fe; } .e-proposta { background: #dbeafe; } .e-fechou { background: #dcfce7; } .e-perdeu { background: #fee2e2; }
+  .ajustes { margin-top: 12px; }
+  .previa .dica-acao { font-size: 13px; margin-top: 6px; padding: 6px 10px; border-radius: 8px; background: #fffbeb; color: #92400e; }
+  .previa .dica-acao.calma { background: var(--fundo); color: var(--suave); }
+  .previa select.etapa { width: auto; padding: 6px 10px; font-size: 14px; border-radius: 999px; }
+  .painel { margin-top: 10px; padding: 12px; border: 1px solid var(--borda); border-radius: 12px; background: #fafbff; }
+  .painel textarea { min-height: 150px; font-size: 14px; }
+  .valores { color: var(--suave); font-size: 13px; }
   [hidden] { display: none !important; }
   @media (max-width: 480px) { .linha { grid-template-columns: 1fr; } }
 </style>
@@ -176,6 +193,26 @@
     <label for="r-msg">Mensagem <span class="opc">(pode editar antes de copiar; personalize a 1ª linha)</span></label>
     <textarea id="r-msg" rows="7"></textarea>
     <div id="r-retorno"></div>
+  </section>
+
+  <!-- Meta e funil -->
+  <section class="cartao" id="sec-meta" hidden>
+    <h2>Meta</h2>
+    <div class="meta-numeros"><strong id="m-recebido">R$ 0</strong> <span>de <span id="m-meta">R$ 1.500</span> recebidos</span></div>
+    <div class="barra" role="progressbar" aria-label="Progresso da meta" aria-valuemin="0" aria-valuemax="100" id="m-barra"><span id="m-preenchido"></span></div>
+    <p class="meta" id="m-detalhe"></p>
+    <div class="etapas" id="m-etapas"></div>
+    <details class="ajustes">
+      <summary>Ajustes de venda (Pix e meta)</summary>
+      <label for="v-pix">Sua chave Pix <span class="opc">(vai nas propostas; fica só neste aparelho)</span></label>
+      <input id="v-pix" maxlength="80" autocomplete="off" placeholder="Ex.: seu e-mail, celular ou chave aleatória">
+      <label for="v-pix-nome">Nome que aparece no Pix</label>
+      <input id="v-pix-nome" maxlength="60">
+      <label for="v-meta">Meta (R$)</label>
+      <input id="v-meta" inputmode="numeric" maxlength="7" placeholder="1500">
+      <button class="btn claro" type="button" id="v-salvar" style="margin-top:10px">Salvar ajustes</button>
+      <div id="v-retorno"></div>
+    </details>
   </section>
 
   <!-- Lista -->
@@ -341,6 +378,7 @@ function mostrarTelas() {
   $('#sec-config').hidden = temChave;
   $('#sec-nova').hidden = !temChave;
   $('#sec-lista').hidden = !temChave;
+  $('#sec-meta').hidden = !temChave;
   $('#trocar-chave').hidden = !temChave;
   if (temChave) listar();
 }
@@ -474,6 +512,8 @@ function atualizarBotaoEnviar() {
   $('#r-enviar').href = resultado.p.whatsapp ? `https://wa.me/${resultado.p.whatsapp}?text=${texto}` : `https://wa.me/?text=${texto}`;
 }
 $('#r-msg').addEventListener('input', atualizarBotaoEnviar);
+// Ao enviar pelo WhatsApp, a prévia passa para a etapa "enviada" no funil.
+$('#r-enviar').addEventListener('click', () => { if (resultado) salvarFunil(resultado.id, { etapa: 'enviada', apenasAvancar: true }).then(() => setTimeout(() => listar({ automatico: true }), 500)).catch(() => {}); });
 
 async function copiar(texto, onde) {
   try { await navigator.clipboard.writeText(texto); }
@@ -493,59 +533,285 @@ function dataCurta(iso) {
   return isNaN(d) ? '' : d.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 }
 
-async function listar() {
+/* ---------- Funil de vendas ---------- */
+const PACOTES = {
+  perfil: { nome: 'Perfil no Google', valor: 250, prazo: '2 dias úteis', itens: [
+    'Perfil da empresa no Google completo: categorias, serviços, horários e fotos',
+    'Botão de WhatsApp no perfil',
+    'Respostas às avaliações e roteiro para pedir novas avaliações (sem oferecer brindes, como o Google exige)'] },
+  essencial: { nome: 'Essencial', valor: 790, prazo: '3 dias úteis', itens: [
+    'Página da empresa no domínio de vocês, pensada para celular',
+    'Botão de WhatsApp e formulário de pedido',
+    'Planilha Google com todos os pedidos e de onde cada um veio',
+    'Aviso por e-mail a cada pedido novo'] },
+  completo: { nome: 'Completo', valor: 1390, prazo: '5 dias úteis', itens: [
+    'Tudo do Essencial (página, WhatsApp, formulário e planilha)',
+    'Painel de indicadores com os pedidos por origem e por mês',
+    'Perfil no Google completo',
+    '1 hora de treinamento'] },
+  manutencao: { nome: 'Manutenção mensal', valor: 150, prazo: 'mensal', mensal: true, itens: [
+    'Ajustes de textos, preços e fotos',
+    'Conferência mensal de funcionamento',
+    'Relatório mensal de pedidos'] }
+};
+const ETAPAS = [
+  ['criada', 'Criada'], ['enviada', 'Enviada'], ['abriu', 'Abriu'], ['respondeu', 'Respondeu'],
+  ['proposta', 'Proposta'], ['fechou', 'Fechou'], ['perdeu', 'Perdeu']
+];
+// O que fazer em cada etapa (ordem da lista = prioridade de atenção).
+const PROXIMA_ACAO = {
+  abriu: ['Abriu a prévia: mande o seguimento hoje.', true],
+  respondeu: ['Respondeu: mande a proposta enquanto o interesse está quente.', true],
+  proposta: ['Proposta enviada: confirme se ficou alguma dúvida em 2 dias.', true],
+  enviada: ['Enviada: se não abrir em 3 dias, mande um lembrete (só um).', false],
+  criada: ['Ainda não enviada: mande o link para a empresa.', true],
+  fechou: ['Fechou: registre a entrada e combine as informações da entrega.', false],
+  perdeu: ['Perdeu: apague a prévia para tirar as fotos do ar.', false]
+};
+const ORDEM = ['abriu', 'respondeu', 'proposta', 'criada', 'enviada', 'fechou', 'perdeu'];
+
+const reais = v => 'R$ ' + Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+/** Lê "1390", "1.390", "1.390,50", "395,5" (mesma regra do backend). null = inválido. */
+function numeroBR(v) {
+  let s = String(v == null ? '' : v).trim().replace(/^R\$\s*/i, '');
+  if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
+  else if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, '');
+  if (!/^\d+(\.\d+)?$/.test(s)) return null;
+  return Math.round(Number(s) * 100) / 100;
+}
+const metaAtual = () => numeroBR(ler('meta_reais')) || 1500;
+
+function linkWhatsPara(numero, texto) {
+  return `https://wa.me/${numero ? numero : ''}?text=${encodeURIComponent(texto)}`;
+}
+
+function mensagemSeguimento(p) {
+  return `Oi, tudo bem? Conseguiu ver a prévia que montei para a ${p.empresa}?\n\n${linkDaPrevia(p.id)}\n\nPosso ajustar cores, fotos e serviços do jeito de vocês. Quer que eu te mande a proposta?`;
+}
+
+function mensagemProposta(p, chavePacote, valor) {
+  const pac = PACOTES[chavePacote];
+  const pix = ler('pix_chave'), pixNome = ler('pix_nome');
+  const linhas = [`*Proposta — ${pac.nome}* para ${p.empresa}`, '', 'O que entra:', ...pac.itens.map(i => `• ${i}`), ''];
+  if (pac.mensal) {
+    linhas.push(`*Investimento:* ${reais(valor)} por mês (cancelável com 30 dias de aviso).`);
+  } else {
+    const entrada = Math.round(valor / 2 * 100) / 100;
+    linhas.push(`*Investimento:* ${reais(valor)}`, `• Entrada de 50% (${reais(entrada)}) no aceite, via Pix`, `• Saldo (${reais(valor - entrada)}) na entrega`,
+      `*Prazo:* ${pac.prazo} depois da entrada e das informações (textos, fotos, horários).`, '',
+      'Não incluso: domínio (cerca de R$ 40/ano, no nome de vocês) e verba de anúncios.');
+  }
+  linhas.push('', '*Condições:*');
+  if (pac.mensal) {
+    linhas.push('• Pago todo mês por Pix; cancelável a qualquer momento com 30 dias de aviso.');
+  } else {
+    linhas.push('• Inclui até 2 rodadas de ajustes depois da primeira versão.',
+      '• Se eu não entregar no prazo combinado, devolvo a entrada inteira.',
+      '• Se vocês desistirem depois que o trabalho começar, a entrada cobre o que já foi feito.',
+      '• A página, os textos e o domínio são de vocês. Não há mensalidade obrigatória para a página continuar no ar; a manutenção mensal é opcional.');
+  }
+  linhas.push('• Proposta válida por 7 dias.');
+  linhas.push('', `Prévia: ${linkDaPrevia(p.id)}`);
+  if (pix) linhas.push('', `Pix: ${pix}${pixNome ? ` (${pixNome})` : ''}`);
+  linhas.push('', 'Para aceitar, é só responder "aceito" 🙂');
+  return linhas.join('\n');
+}
+
+async function salvarFunil(id, campos) {
+  const r = await api({ acao: 'atualizarFunil', id, ...campos });
+  if (r.chaveInvalida) { chave = ''; salvar('chave_previas', ''); mostrarTelas(); }
+  return r;
+}
+
+function desenharMeta(previas, totais) {
+  const meta = metaAtual();
+  const recebido = (totais && totais.recebido) || 0;
+  const aReceber = (totais && totais.aReceber) || 0;
+  const pct = Math.min(100, Math.round(recebido / meta * 100));
+  $('#m-recebido').textContent = reais(recebido);
+  $('#m-meta').textContent = reais(meta);
+  $('#m-preenchido').style.width = pct + '%';
+  $('#m-barra').setAttribute('aria-valuenow', String(pct));
+  const falta = Math.max(0, meta - recebido);
+  $('#m-detalhe').textContent = (falta ? `Faltam ${reais(falta)} (${pct}% da meta).` : 'Meta batida! 🎉') +
+    (aReceber ? ` A receber dos fechados: ${reais(aReceber)}.` : '');
+  const cont = {}; previas.forEach(p => { cont[p.etapa] = (cont[p.etapa] || 0) + 1; });
+  $('#m-etapas').replaceChildren(...ETAPAS.map(([k, rotulo]) => {
+    const c = document.createElement('span'); c.className = 'chip e-' + k;
+    c.append(document.createTextNode(rotulo + ' '), Object.assign(document.createElement('b'), { textContent: String(cont[k] || 0) }));
+    return c;
+  }));
+}
+
+let pedidoLista = 0;
+/**
+ * Recarrega a lista. Respostas atrasadas são ignoradas (fica sempre a mais nova).
+ * automatico: atualizações depois de salvar — se houver um painel aberto (mensagem sendo editada),
+ * só a meta é atualizada, para não apagar o que você está digitando.
+ */
+async function listar(opcoes) {
+  const automatico = !!(opcoes && opcoes.automatico);
   const box = $('#l-itens');
-  box.textContent = 'Carregando…';
+  const meuPedido = ++pedidoLista;
+  if (!box.querySelector('.previa')) box.textContent = 'Carregando…';
   try {
     const r = await api({ acao: 'listarPrevias' });
+    if (meuPedido !== pedidoLista) return;
     if (r.chaveInvalida) { chave = ''; salvar('chave_previas', ''); return mostrarTelas(); }
     if (!r.ok) { box.textContent = r.mensagem || 'Erro ao carregar.'; return; }
+    desenharMeta(r.previas, r.totais);
+    if (automatico && box.querySelector('.painel:not([hidden])')) return;
     box.replaceChildren();
     if (!r.previas.length) { box.textContent = 'Nenhuma prévia ainda.'; return; }
-    r.previas.forEach(p => box.appendChild(itemPrevia(p)));
-  } catch (e) { box.textContent = 'Sem conexão com o servidor.'; }
+    const ordenadas = [...r.previas].sort((a, b) => ORDEM.indexOf(a.etapa) - ORDEM.indexOf(b.etapa));
+    ordenadas.forEach(p => box.appendChild(itemPrevia(p)));
+  } catch (e) { if (meuPedido === pedidoLista && !box.querySelector('.previa')) box.textContent = 'Sem conexão com o servidor.'; }
+}
+
+function botao(texto, classe, ao) {
+  const b = document.createElement('button'); b.type = 'button'; b.className = 'btn ' + classe; b.textContent = texto;
+  if (ao) b.addEventListener('click', ao);
+  return b;
 }
 
 function itemPrevia(p) {
   const div = document.createElement('div'); div.className = 'previa';
+  const retornoItem = document.createElement('div'); retornoItem.id = 'ret-' + p.id;
+  const avisoItem = (tipo, texto) => aviso('#' + CSS.escape(retornoItem.id), tipo, texto);
+
   const nome = document.createElement('strong'); nome.textContent = p.empresa;
   const vistas = document.createElement('span');
   vistas.className = 'vistas' + (p.visualizacoes ? '' : ' zero');
   vistas.textContent = p.visualizacoes ? `👀 ${p.visualizacoes} visita${p.visualizacoes > 1 ? 's' : ''}` : 'ainda não abriu';
+  const topo = document.createElement('div'); topo.style.cssText = 'display:flex; justify-content:space-between; gap:8px; align-items:start';
+  topo.append(nome, vistas);
+
   const meta = document.createElement('div'); meta.className = 'meta';
   meta.textContent = `criada ${dataCurta(p.criada)}` + (p.ultimaVisualizacao ? ` · última visita ${dataCurta(p.ultimaVisualizacao)}` : '');
-  const acoes = document.createElement('div'); acoes.className = 'acoes';
+
+  // Etapa do funil
+  const linhaEtapa = document.createElement('div'); linhaEtapa.style.cssText = 'display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:6px';
+  const sel = document.createElement('select'); sel.className = 'etapa e-' + p.etapa; sel.setAttribute('aria-label', 'Etapa de ' + p.empresa);
+  ETAPAS.forEach(([k, rotulo]) => sel.add(new Option(rotulo, k, false, k === p.etapa)));
+  sel.addEventListener('change', async () => {
+    sel.disabled = true;
+    try { const r = await salvarFunil(p.id, { etapa: sel.value }); if (r.ok) listar({ automatico: true }); else avisoItem('erro', r.mensagem || 'Não salvou.'); }
+    catch (e) { avisoItem('erro', 'Sem conexão com o servidor.'); }
+    finally { sel.disabled = false; }
+  });
+  const valores = document.createElement('span'); valores.className = 'valores';
+  if (p.pacote && PACOTES[p.pacote]) valores.textContent = `${PACOTES[p.pacote].nome} · ${reais(p.valor)}` + (p.recebido ? ` · recebido ${reais(p.recebido)}` : '');
+  linhaEtapa.append(sel, valores);
+
+  const [textoAcao, urgente] = PROXIMA_ACAO[p.etapa] || ['', false];
+  const dica = document.createElement('div'); dica.className = 'dica-acao' + (urgente ? '' : ' calma'); dica.textContent = '👉 ' + textoAcao;
+
+  // Painéis (seguimento / proposta / pagamento) abrem embaixo do item
+  const painel = document.createElement('div'); painel.className = 'painel'; painel.hidden = true;
+  const abrirPainel = conteudo => { painel.replaceChildren(...conteudo); painel.hidden = false; };
+
+  const painelMensagem = (texto, aoEnviar) => {
+    const ta = document.createElement('textarea'); ta.value = texto; ta.setAttribute('aria-label', 'Mensagem');
+    const enviar = document.createElement('a'); enviar.className = 'btn whats'; enviar.target = '_blank'; enviar.rel = 'noopener'; enviar.textContent = '💬 Enviar no WhatsApp';
+    const atualizar = () => { enviar.href = linkWhatsPara(p.whatsapp, ta.value); };
+    ta.addEventListener('input', atualizar); atualizar();
+    if (aoEnviar) enviar.addEventListener('click', aoEnviar);
+    const acoesP = document.createElement('div'); acoesP.className = 'acoes';
+    acoesP.append(enviar, botao('Copiar', 'claro', () => copiar(ta.value, '#' + CSS.escape(retornoItem.id))), botao('Fechar', 'claro', () => { painel.hidden = true; }));
+    return [ta, acoesP];
+  };
+
+  const btnSeguimento = botao('Seguimento', 'claro', () => abrirPainel(painelMensagem(mensagemSeguimento(p))));
+
+  const btnProposta = botao('Proposta', 'claro', () => {
+    const selP = document.createElement('select'); selP.setAttribute('aria-label', 'Pacote');
+    Object.entries(PACOTES).forEach(([k, pac]) => selP.add(new Option(`${pac.nome} — ${reais(pac.valor)}${pac.mensal ? '/mês' : ''}`, k, false, k === (p.pacote || 'essencial'))));
+    const valor = document.createElement('input'); valor.inputMode = 'decimal'; valor.setAttribute('aria-label', 'Valor (R$)');
+    valor.value = String(p.pacote === selP.value && p.valor ? p.valor : PACOTES[selP.value].valor);
+    const [ta, acoesP] = painelMensagem('', async ev => {
+      const v = numeroBR(valor.value);
+      if (v === null) { ev.preventDefault(); return avisoItem('erro', 'Valor inválido (ex.: 790 ou 1.390,00).'); }
+      // Só avança a etapa: reenviar a proposta de quem já fechou não volta para "proposta".
+      try { await salvarFunil(p.id, { etapa: 'proposta', pacote: selP.value, valor: v, apenasAvancar: true }); setTimeout(() => listar({ automatico: true }), 500); }
+      catch (e) { /* a mensagem segue mesmo sem salvar a etapa */ }
+    });
+    const regerar = () => {
+      const v = numeroBR(valor.value);
+      valor.classList.toggle('invalido', v === null);
+      if (v !== null) { ta.value = mensagemProposta(p, selP.value, v); ta.dispatchEvent(new Event('input')); }
+    };
+    selP.addEventListener('change', () => { valor.value = String(PACOTES[selP.value].valor); regerar(); });
+    valor.addEventListener('input', regerar);
+    const linhaP = document.createElement('div'); linhaP.className = 'linha'; linhaP.append(selP, valor);
+    abrirPainel([linhaP, ta, acoesP]);
+    regerar();
+  });
+
+  const btnPagamento = botao('Registrar pagamento', 'claro', () => {
+    const pac = PACOTES[p.pacote];
+    const sugestao = pac && !pac.mensal && !p.recebido ? p.valor / 2 : (p.valor ? Math.max(0, p.valor - p.recebido) : '');
+    const valor = document.createElement('input'); valor.inputMode = 'decimal'; valor.placeholder = 'Valor recebido (R$)'; valor.value = sugestao ? String(sugestao) : '';
+    valor.setAttribute('aria-label', 'Valor recebido');
+    // Um código por pagamento: clique duplo ou nova tentativa não somam duas vezes no servidor.
+    const idPagamento = (crypto.randomUUID ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(16).slice(2));
+    const salvarPag = botao('Salvar pagamento', 'whats', async () => {
+      if (numeroBR(valor.value) === null) return avisoItem('erro', 'Valor inválido (ex.: 395 ou 1.390,00).');
+      salvarPag.disabled = true;
+      let concluido = false;
+      try {
+        const r = await api({ acao: 'registrarPagamento', id: p.id, valor: valor.value.trim(), idPagamento });
+        if (r.ok) { concluido = true; painel.hidden = true; avisoItem('ok', `Recebido no total: ${reais(r.recebido)}.`); setTimeout(() => listar({ automatico: true }), 800); }
+        else avisoItem('erro', r.mensagem || 'Não salvou.');
+      } catch (e) { avisoItem('erro', 'Sem conexão. Toque de novo: o mesmo pagamento não é contado duas vezes.'); }
+      finally { if (!concluido) salvarPag.disabled = false; }
+    });
+    const acoesP = document.createElement('div'); acoesP.className = 'acoes'; acoesP.append(salvarPag, botao('Fechar', 'claro', () => { painel.hidden = true; }));
+    abrirPainel([valor, acoesP]);
+  });
+
   const abrir = document.createElement('a'); abrir.className = 'btn claro'; abrir.textContent = 'Abrir';
   abrir.href = linkDaPrevia(p.id); abrir.target = '_blank'; abrir.rel = 'noopener';
-  const copiarBtn = document.createElement('button'); copiarBtn.type = 'button'; copiarBtn.className = 'btn claro'; copiarBtn.textContent = 'Copiar link';
-  const retornoItem = document.createElement('div'); retornoItem.id = 'ret-' + p.id;
-  copiarBtn.addEventListener('click', () => copiar(linkDaPrevia(p.id), '#' + CSS.escape(retornoItem.id)));
-  const apagar = document.createElement('button'); apagar.type = 'button'; apagar.className = 'btn perigo'; apagar.textContent = 'Apagar';
+  const copiarBtn = botao('Copiar link', 'claro', () => copiar(linkDaPrevia(p.id), '#' + CSS.escape(retornoItem.id)));
+  const apagar = botao('Apagar', 'perigo');
   apagar.addEventListener('click', async () => {
     if (apagar.dataset.confirmar !== '1') { apagar.dataset.confirmar = '1'; apagar.textContent = 'Confirmar?'; return; }
     apagar.disabled = true;
     try {
       const r = await api({ acao: 'apagarPrevia', id: p.id });
-      if (r.ok) div.remove();
+      if (r.ok) { div.remove(); listar({ automatico: true }); }
       else if (r.chaveInvalida) { chave = ''; salvar('chave_previas', ''); mostrarTelas(); aviso('#c-retorno', 'erro', 'A chave mudou. Cole a nova chave.'); }
-      else { apagar.textContent = 'Erro'; aviso('#' + CSS.escape(retornoItem.id), 'erro', r.mensagem || 'Não foi possível apagar.'); }
+      else { apagar.textContent = 'Erro'; avisoItem('erro', r.mensagem || 'Não foi possível apagar.'); }
     }
     catch (e) { apagar.textContent = 'Erro'; apagar.disabled = false; }
   });
-  acoes.append(abrir, copiarBtn, apagar);
-  const topo = document.createElement('div'); topo.style.cssText = 'display:flex; justify-content:space-between; gap:8px; align-items:start';
-  topo.append(nome, vistas);
-  div.append(topo, meta, acoes, retornoItem);
+
+  const acoes = document.createElement('div'); acoes.className = 'acoes';
+  acoes.append(btnSeguimento, btnProposta, btnPagamento, abrir, copiarBtn, apagar);
+  div.append(topo, meta, linhaEtapa, dica, acoes, painel, retornoItem);
   return div;
 }
-$('#l-atualizar').addEventListener('click', listar);
+
+/* Ajustes de venda (ficam só neste aparelho) */
+$('#v-pix').value = ler('pix_chave');
+$('#v-pix-nome').value = ler('pix_nome');
+$('#v-meta').value = ler('meta_reais');
+$('#v-salvar').addEventListener('click', () => {
+  const meta = numeroBR($('#v-meta').value);
+  if ($('#v-meta').value.trim() && !(meta >= 1)) return aviso('#v-retorno', 'erro', 'Meta inválida (ex.: 1500 ou 1.500,00).');
+  salvar('pix_chave', $('#v-pix').value.trim());
+  salvar('pix_nome', $('#v-pix-nome').value.trim());
+  salvar('meta_reais', meta >= 1 ? String(meta) : '');
+  aviso('#v-retorno', 'ok', 'Ajustes salvos neste aparelho.');
+  listar({ automatico: true });
+});
+$('#l-atualizar').addEventListener('click', () => listar());
 
 /* ---------- Início ---------- */
 $('#c-nome').value = ler('seu_nome') || 'Leonardo';
 $('#f-cor').value = corPadrao($('#f-nicho').value);
 mostrarTelas();
 // Exposto para testes automatizados
-window.GERADOR = { coletarPrevia, lerServicos, whatsDigitos, mensagemPara, linkDaPrevia, listar, imagens, corDaLogo, reduzirImagem, get chave() { return chave; } };
+window.GERADOR = { numeroBR, coletarPrevia, lerServicos, whatsDigitos, mensagemPara, linkDaPrevia, listar, imagens, corDaLogo, reduzirImagem, PACOTES, mensagemProposta, mensagemSeguimento, get chave() { return chave; } };
 </script>
 </body>
 </html>

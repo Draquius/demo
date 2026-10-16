@@ -111,6 +111,19 @@
   #servicos .item:hover { transform: translateY(-3px); box-shadow: var(--sombra-forte); }
   .item .icone-servico { width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; background: linear-gradient(135deg, var(--cor-clara), #fff); color: var(--cor-escura); font-size: 24px; margin-bottom: 16px; border: 1px solid var(--cor-clara); }
 
+  /* Imagens enviadas pelo gerador (logo e fotos da empresa) */
+  .marca-ico.tem-logo { background: #fff; border: 1px solid var(--borda); width: auto; min-width: 38px; max-width: 120px; padding: 3px 6px; }
+  .marca-ico img { display: block; height: 30px; max-width: 108px; object-fit: contain; }
+  footer .marca-ico.tem-logo img { height: 34px; }
+  .placa .foto { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .placa.com-foto::before, .placa.com-foto::after { display: none; }
+  .placa.com-foto .sombra-foto { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 45%, rgba(0,0,0,.45)); }
+  .placa.com-foto .grande { display: none; }
+  .galeria { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr)); gap: 14px; }
+  .galeria figure { margin: 0; border-radius: var(--raio); overflow: hidden; aspect-ratio: 4 / 3; background: var(--cor-clara); box-shadow: var(--sombra); }
+  .galeria img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .3s; }
+  .galeria figure:hover img { transform: scale(1.04); }
+
   .alt { background: var(--cartao); border-top: 1px solid var(--borda); border-bottom: 1px solid var(--borda); }
   .passos { counter-reset: passo; position: relative; }
   .passos .item { box-shadow: none; background: var(--fundo); }
@@ -274,6 +287,16 @@
     </div>
   </section>
 
+  <section id="galeria" hidden>
+    <div class="container">
+      <div class="cabecalho">
+        <span class="rotulo">Fotos</span>
+        <h2 class="titulo">Nosso trabalho</h2>
+      </div>
+      <div class="galeria" id="galeria-fotos"></div>
+    </div>
+  </section>
+
   <section class="alt" id="como-funciona">
     <div class="container">
       <div class="cabecalho">
@@ -425,6 +448,9 @@ const CONFIG = {
   MODO_DEMO: true,         // true mostra a barra para trocar de nicho. Use false para cliente real.
   NICHO_PADRAO: 'oficina', // uma das chaves de nichos.js (oficina, desentupidora, barbearia…)
   TIMEOUT_MS: 15000,
+  // Endereço das imagens guardadas no Drive (logo/fotos das prévias). Precisam estar "qualquer pessoa com o link".
+  URL_IMAGEM: (id, largura) => `https://drive.google.com/thumbnail?id=${encodeURIComponent(id)}&sz=w${largura}`,
+  URL_IMAGEM_RESERVA: (id, largura) => `https://lh3.googleusercontent.com/d/${encodeURIComponent(id)}=w${largura}`,
   ASSINATURA: 'LeonTech',          // quem assina as prévias personalizadas (?p=id)
   MEU_WHATSAPP: '5531992569221'    // botão "Quero este site" das prévias
 };
@@ -506,6 +532,7 @@ function aplicarNicho(chave, personalizado) {
   // Ícones: o do nicho (logo, ilustração) e os de interface (data-ico).
   $$('.js-ico-nicho').forEach(el => el.replaceChildren(criarIcone(n.icone)));
   $$('.js-ico').forEach(el => el.replaceChildren(criarIcone(el.dataset.ico)));
+  aplicarImagens(n);
   $('#notif-1').textContent = n.pedido === 'agendamentos' ? 'Novo agendamento' : 'Novo pedido de orçamento';
   // Na prévia de empresa real, nada de prometer tempo de resposta em nome dela.
   $('#notif-2').textContent = personalizado ? 'Continue pelo WhatsApp' : 'Respondido no WhatsApp';
@@ -553,6 +580,54 @@ function aplicarNicho(chave, personalizado) {
   sel.add(new Option('Outro', 'Outro'));
 
   const seletor = $('#demo-nicho'); if (seletor && NICHOS[chave]) seletor.value = chave;
+}
+
+/* ---------- Imagens da empresa (prévias com logo/fotos do gerador) ---------- */
+function idImagemValido(v) { return /^[A-Za-z0-9_-]{20,100}$/.test(String(v || '')); }
+
+/** <img> de um arquivo do Drive; se falhar, tenta o endereço reserva e, por fim, chama aoFalhar. */
+function criarImg(id, largura, alt, classe, aoFalhar) {
+  const img = document.createElement('img');
+  img.alt = alt; img.decoding = 'async'; img.referrerPolicy = 'no-referrer';
+  if (classe) img.className = classe;
+  let reserva = false;
+  img.addEventListener('error', () => {
+    if (!reserva) { reserva = true; img.src = CONFIG.URL_IMAGEM_RESERVA(id, largura); }
+    else if (aoFalhar) aoFalhar(img);
+  });
+  img.src = CONFIG.URL_IMAGEM(id, largura);
+  return img;
+}
+
+function aplicarImagens(n) {
+  const logo = idImagemValido(n.logo) ? n.logo : '';
+  $$('.marca-ico').forEach(el => {
+    el.classList.toggle('tem-logo', !!logo);
+    if (logo) el.replaceChildren(criarImg(logo, 240, `Logo ${n.empresa}`, '', () => { el.classList.remove('tem-logo'); el.replaceChildren(criarIcone(n.icone)); }));
+  });
+
+  const fotos = (Array.isArray(n.fotos) ? n.fotos : []).filter(idImagemValido).slice(0, 4);
+  const placa = $('.ilustracao .placa');
+  $$('.placa .foto, .placa .sombra-foto').forEach(e => e.remove());
+  placa.classList.toggle('com-foto', fotos.length > 0);
+  if (fotos.length) {
+    const img = criarImg(fotos[0], 1200, `Foto de ${n.empresa}`, 'foto', i => { i.remove(); placa.classList.remove('com-foto'); });
+    const sombra = document.createElement('div'); sombra.className = 'sombra-foto';
+    placa.prepend(img, sombra);
+  }
+
+  const extras = fotos.slice(1);
+  $('#galeria').hidden = !extras.length;
+  $('#galeria-fotos').replaceChildren(...extras.map(id => {
+    const fig = document.createElement('figure');
+    const img = criarImg(id, 900, `Foto de ${n.empresa}`, '', () => {
+      fig.remove();
+      if (!$('#galeria-fotos').children.length) $('#galeria').hidden = true; // nenhuma foto carregou
+    });
+    img.loading = 'lazy';
+    fig.appendChild(img);
+    return fig;
+  }));
 }
 
 function montarBarraDemo(chaveInicial) {
@@ -615,6 +690,8 @@ function montarPrevia(cfg) {
   n.nota = nota >= 1 && nota <= 5 && qtd >= 1 ? nota : null;
   n.avaliacoes = n.nota ? Math.round(qtd) : null;
   n.notaExemplo = false;
+  n.logo = idImagemValido(cfg.logo) ? cfg.logo : '';
+  n.fotos = (Array.isArray(cfg.fotos) ? cfg.fotos : []).filter(idImagemValido).slice(0, 4);
   if (cfg.bairro) n.titulo = base.titulo.replace(' em BH', ` no bairro ${cfg.bairro}, BH`);
   if (cfg.titulo) n.titulo = cfg.titulo;
   if (cfg.whatsapp) n.whatsapp = cfg.whatsapp;
@@ -818,7 +895,7 @@ function mascaraTelefone(ev) {
 })();
 
 // Exposto para testes automatizados
-window.LP = { CONFIG, NICHOS, validar, normalizarTelefone, coletar, aplicarNicho, montarPrevia, misturarCor, carregarPrevia, get previaAtual() { return previaAtual; } };
+window.LP = { CONFIG, NICHOS, aplicarImagens, validar, normalizarTelefone, coletar, aplicarNicho, montarPrevia, misturarCor, carregarPrevia, get previaAtual() { return previaAtual; } };
 </script>
 </body>
 </html>

@@ -13,7 +13,7 @@
  * destaques[3], tituloForm, cta, pedido, placeholderMensagem, introServicos,
  * servicos[6], passos[3], faq[3], endereco, horario, whatsapp, mensagemWhats.
  */
-const WHATS_DEMO = '5531992569221';
+const WHATS_DEMO = '5531992868113';
 const CNPJ_FICTICIO = 'CNPJ 00.000.000/0001-00 (fictício)';
 const ATENDE_BH = 'Atendimento em BH e região metropolitana';
 

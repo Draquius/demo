@@ -226,7 +226,7 @@ const NICHOS = {
   arcondicionado: {
     grupo: 'Climatização e eletrônicos', rotulo: 'Ar-condicionado',
     empresa: 'Exemplo Climatização',
-    cor: '#0284c7',
+    cor: '#075985',
     titulo: 'Instalação e manutenção de ar-condicionado em BH',
     subtitulo: 'Instalação, limpeza e conserto com orçamento rápido pelo WhatsApp.',
     destaques: ['Orçamento sem compromisso', 'Limpeza e higienização completas', 'Casas e empresas'],
@@ -400,7 +400,7 @@ const NICHOS = {
   petshop: {
     grupo: 'Beleza, estética e pet', rotulo: 'Banho e tosa',
     empresa: 'Exemplo Pet Banho & Tosa',
-    cor: '#ea580c',
+    cor: '#b5440a',
     titulo: 'Banho e tosa em BH com horário marcado',
     subtitulo: 'Banho, tosa e cuidados para o seu pet, com agendamento pelo WhatsApp.',
     destaques: ['Horário marcado', 'Cuidado e paciência com cada pet', 'Busca e entrega (consulte)'],
@@ -462,7 +462,7 @@ const NICHOS = {
   estofados: {
     grupo: 'Mudanças e limpeza', rotulo: 'Limpeza de estofados',
     empresa: 'Exemplo Limpeza de Estofados',
-    cor: '#0d9488',
+    cor: '#0b8278',
     titulo: 'Limpeza de sofás e estofados em BH, no seu endereço',
     subtitulo: 'Higienização de sofá, colchão, cadeiras e tapetes sem sair de casa.',
     destaques: ['Orçamento por foto', 'Atendimento no seu endereço', 'Agendamento pelo WhatsApp'],
@@ -490,7 +490,7 @@ const NICHOS = {
   limpeza: {
     grupo: 'Mudanças e limpeza', rotulo: 'Limpeza residencial e pós-obra',
     empresa: 'Exemplo Limpeza',
-    cor: '#16a34a',
+    cor: '#117e39',
     titulo: 'Diarista e limpeza pós-obra em BH com agendamento',
     subtitulo: 'Limpeza residencial, comercial e pós-obra com escopo combinado antes.',
     destaques: ['Orçamento sem compromisso', 'Escopo combinado por escrito', 'Agendamento flexível'],
@@ -517,11 +517,73 @@ const NICHOS = {
   }
 };
 
+/*
+ * Ícones (traço 24×24, desenhados para este kit; sem bibliotecas externas).
+ * Cada valor é o conteúdo interno de um <svg viewBox="0 0 24 24">.
+ */
+const ICONES = {
+  carro: '<path d="M5 16h14M3 16v-3l2-5a2 2 0 0 1 2-1h10a2 2 0 0 1 2 1l2 5v3"/><path d="M3 13h18"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/>',
+  raio: '<path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/>',
+  gota: '<path d="M12 3c3 4 6 7.2 6 10.6A6 6 0 0 1 6 13.6C6 10.2 9 7 12 3z"/><path d="M9 14.5a3 3 0 0 0 3 3"/>',
+  chave: '<circle cx="7.5" cy="15.5" r="4"/><path d="M10.4 12.6 20 3M16 7l3 3M13.5 9.5l2 2"/>',
+  inseto: '<rect x="8" y="7" width="8" height="13" rx="4"/><path d="M12 20v-8M8 11H4M20 11h-4M8 15H3M21 15h-5M8 19l-3 2M16 19l3 2M10 7 8 4M14 7l2-3"/>',
+  janela: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 3v18M3 12h18M6 6l3 3"/>',
+  floco: '<path d="M12 2v20M3.3 7l17.4 10M3.3 17 20.7 7"/><path d="m9 4 3 2 3-2M9 20l3-2 3 2"/>',
+  celular: '<rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/>',
+  maquina: '<rect x="4" y="2" width="16" height="20" rx="2"/><circle cx="12" cy="13" r="5"/><path d="M8 5.5h.01M11 5.5h.01M12 11a2 2 0 0 1 2 2"/>',
+  tesoura: '<circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.1 15.9M14.5 14.5 20 20M8.1 8.1 12 12"/>',
+  brilho: '<path d="M12 3l1.8 4.9L19 9.7l-5.2 1.8L12 16.4l-1.8-4.9L5 9.7l5.2-1.8z"/><path d="M19 15l.7 1.9 2 .7-2 .7L19 20.2l-.7-1.9-2-.7 2-.7z"/>',
+  pata: '<circle cx="6.5" cy="10" r="1.8"/><circle cx="10" cy="6" r="1.8"/><circle cx="14" cy="6" r="1.8"/><circle cx="17.5" cy="10" r="1.8"/><path d="M12 11.5c-2.8 0-5 3-5 5.3 0 1.7 1.6 2.2 3 2.2h4c1.4 0 3-.5 3-2.2 0-2.3-2.2-5.3-5-5.3z"/>',
+  caminhao: '<path d="M2 6h12v10H2zM14 9h4l3 3.5V16h-7z"/><circle cx="6" cy="18" r="2"/><circle cx="17" cy="18" r="2"/>',
+  sofa: '<path d="M5 10V8a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3v2"/><path d="M3 11a2 2 0 0 1 2 2v2h14v-2a2 2 0 1 1 2 2v3H1v-3a2 2 0 0 1 2-2z"/><path d="M5 18v2M19 18v2"/>',
+  vassoura: '<path d="M20 2 12.5 9.5"/><path d="M10.5 9 15 13.5 13 21l-9.5-9.5L10.5 9z"/><path d="M6.5 14.5l3 3M9 12.5l3 3"/>',
+  // Interface
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  estrela: '<path d="m12 2.8 2.8 5.8 6.4.9-4.6 4.5 1.1 6.3L12 17.3l-5.7 3 1.1-6.3-4.6-4.5 6.4-.9z"/>',
+  conversa: '<path d="M21 11.5a8.5 8.5 0 0 1-12.6 7.4L3 20.5l1.6-5A8.5 8.5 0 1 1 21 11.5z"/>',
+  relogio: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  mapa: '<path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>',
+  escudo: '<path d="M12 3 4 6v6c0 4.4 3.4 7.9 8 9 4.6-1.1 8-4.6 8-9V6z"/><path d="m9 12 2 2 4-4"/>',
+  envio: '<path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/>',
+  sino: '<path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/>'
+};
+
+const ICONE_POR_NICHO = {
+  oficina: 'carro', servicos: 'raio', desentupidora: 'gota', chaveiro: 'chave', dedetizacao: 'inseto',
+  vidracaria: 'janela', arcondicionado: 'floco', celular: 'celular', eletro: 'maquina', estetica: 'brilho',
+  barbearia: 'tesoura', salao: 'tesoura', petshop: 'pata', mudancas: 'caminhao', estofados: 'sofa', limpeza: 'vassoura'
+};
+
+/** Cria um elemento <svg> com o ícone pedido (só nomes de ICONES; nunca texto de usuário). */
+function criarIcone(nome, classe) {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('aria-hidden', 'true');
+  svg.setAttribute('class', 'ico' + (classe ? ' ' + classe : ''));
+  svg.innerHTML = ICONES[nome] || ICONES.check;
+  return svg;
+}
+
 /** Mistura duas cores #rrggbb (t = 0 → a, t = 1 → b). */
 function misturarCor(a, b, t) {
   const p = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
   const [x, y] = [p(a), p(b)];
   return '#' + x.map((v, i) => Math.round(v + (y[i] - v) * t).toString(16).padStart(2, '0')).join('');
+}
+
+/** Contraste (WCAG) entre uma cor #rrggbb e o branco. */
+function contrasteComBranco(hex) {
+  const lin = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+  const [r, g, b] = [1, 3, 5].map(i => lin(parseInt(hex.slice(i, i + 2), 16)));
+  const L = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  return 1.05 / (L + 0.05);
+}
+
+/** Escurece a cor até o texto branco por cima ficar legível (contraste ≥ 4,5). */
+function corLegivel(hex) {
+  let c = hex;
+  for (let i = 0; i < 12 && contrasteComBranco(c) < 4.5; i++) c = misturarCor(c, '#000000', 0.12);
+  return c;
 }
 
 // Campos comuns preenchidos automaticamente.
@@ -532,4 +594,7 @@ Object.keys(NICHOS).forEach(chave => {
   if (!n.whatsapp) n.whatsapp = WHATS_DEMO;
   if (!n.corEscura) n.corEscura = misturarCor(n.cor, '#000000', 0.45);
   if (!n.corClara) n.corClara = misturarCor(n.cor, '#ffffff', 0.85);
+  if (!n.icone) n.icone = ICONE_POR_NICHO[chave] || 'check';
+  // Nota de exemplo só para a demo fictícia; prévias usam a nota real informada no gerador (ou nenhuma).
+  if (n.nota === undefined) { n.nota = 4.9; n.avaliacoes = 120; n.notaExemplo = true; }
 });

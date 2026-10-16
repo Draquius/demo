@@ -29,6 +29,9 @@
   .btn:active { transform: translateY(0) scale(.99); }
   .btn-primario { background: var(--cor); color: #fff; box-shadow: 0 8px 20px -6px var(--cor); }
   .btn-whats { background: var(--whats); color: #fff; box-shadow: 0 8px 20px -8px var(--whats); }
+  /* Símbolo oficial do WhatsApp: preenchido, sem traço; só nas cores oficiais (branco ou verde #25D366). */
+  .btn-whats .ico, .ico-wa { fill: currentColor; stroke: none; }
+  .btn .js-ico { display: inline-flex; }
   .btn-claro { background: #fff; color: var(--cor-escura); }
   .btn-contorno { background: #fff; color: var(--texto); border: 1.5px solid var(--borda); }
   .btn[disabled] { opacity: .6; cursor: progress; transform: none; }
@@ -186,7 +189,8 @@
   #aviso-demo { margin-top: 24px; padding-top: 16px; border-top: 1px solid #1e293b; color: #94a3b8; }
 
   .whats-flutuante { position: fixed; right: 16px; bottom: 16px; z-index: 20; width: 58px; height: 58px; padding: 0; border-radius: 50%; box-shadow: 0 10px 24px rgba(0,0,0,.25); }
-  .whats-flutuante .ico { font-size: 26px; }
+  .whats-flutuante { background: #fff; color: #25d366; border: 1px solid var(--borda); }
+  .whats-flutuante .ico { font-size: 32px; }
 
   #cookies { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 30; max-width: 560px; background: #fff; color: var(--texto); border: 1px solid var(--borda); border-radius: var(--raio); padding: 16px; box-shadow: var(--sombra-forte); font-size: 14px; }
   #cookies .acoes { display: flex; gap: 8px; margin-top: 10px; }
@@ -227,7 +231,7 @@
 <div id="previa-bar" hidden>
   <div class="container">
     <span id="previa-texto"></span>
-    <a class="btn btn-whats" id="previa-quero" href="#" target="_blank" rel="noopener">Quero este site</a>
+    <a class="btn btn-whats" id="previa-quero" href="#" target="_blank" rel="noopener"><span class="js-ico" data-ico="whatsapp"></span>Quero este site</a>
   </div>
 </div>
 <div id="carregando" aria-live="polite">Carregando prévia…</div>
@@ -241,7 +245,7 @@
       <a href="#duvidas">Dúvidas</a>
       <a href="#formulario">Contato</a>
     </nav>
-    <a class="btn btn-whats js-whats" href="#" target="_blank" rel="noopener" data-evento="clique_whatsapp_topo" aria-label="Falar no WhatsApp"><span class="js-ico" data-ico="conversa"></span><span class="txt">WhatsApp</span></a>
+    <a class="btn btn-whats js-whats" href="#" target="_blank" rel="noopener" data-evento="clique_whatsapp_topo" aria-label="Falar no WhatsApp"><span class="js-ico" data-ico="whatsapp"></span><span class="txt">WhatsApp</span></a>
   </div>
 </header>
 
@@ -254,7 +258,7 @@
         <p class="sub" data-t="subtitulo"></p>
         <div class="acoes">
           <a class="btn btn-primario" href="#formulario"><span data-t="cta"></span></a>
-          <a class="btn btn-whats js-whats" href="#" target="_blank" rel="noopener" data-evento="clique_whatsapp_hero"><span class="js-ico" data-ico="conversa"></span>Falar no WhatsApp</a>
+          <a class="btn btn-whats js-whats" href="#" target="_blank" rel="noopener" data-evento="clique_whatsapp_hero"><span class="js-ico" data-ico="whatsapp"></span>Falar no WhatsApp</a>
         </div>
         <div class="avaliacao" id="avaliacao" hidden>
           <span class="estrelas" aria-hidden="true"></span>
@@ -399,7 +403,7 @@
         <p>Leva menos de um minuto.</p>
         <div class="acoes">
           <a class="btn btn-claro" href="#formulario"><span data-t="cta"></span></a>
-          <a class="btn btn-whats js-whats" href="#" target="_blank" rel="noopener" data-evento="clique_whatsapp_final"><span class="js-ico" data-ico="conversa"></span>WhatsApp</a>
+          <a class="btn btn-whats js-whats" href="#" target="_blank" rel="noopener" data-evento="clique_whatsapp_final"><span class="js-ico" data-ico="whatsapp"></span>WhatsApp</a>
         </div>
       </div>
     </div>
@@ -427,7 +431,7 @@
   </div>
 </footer>
 
-<a class="btn btn-whats whats-flutuante js-whats" href="#" target="_blank" rel="noopener" aria-label="Falar no WhatsApp" data-evento="clique_whatsapp_flutuante"><span class="js-ico" data-ico="conversa"></span></a>
+<a class="btn btn-whats whats-flutuante js-whats" href="#" target="_blank" rel="noopener" aria-label="Falar no WhatsApp" data-evento="clique_whatsapp_flutuante"><span class="js-ico" data-ico="whatsapp"></span></a>
 
 <div id="cookies" hidden role="dialog" aria-label="Aviso de cookies">
   Usamos cookies de medição (Google Analytics) para entender como a página é usada. Você aceita?
@@ -806,7 +810,7 @@ function retorno(tipo, texto, comWhats) {
   const p = document.createElement('div'); p.textContent = texto; div.appendChild(p);
   if (comWhats) {
     const a = document.createElement('a'); a.className = 'btn btn-whats'; a.target = '_blank'; a.rel = 'noopener';
-    a.href = linkWhats(nichoAtual, comWhats); a.append(criarIcone('conversa'), document.createTextNode('Continuar no WhatsApp'));
+    a.href = linkWhats(nichoAtual, comWhats); a.append(criarIcone('whatsapp', 'ico-wa'), document.createTextNode('Continuar no WhatsApp'));
     div.appendChild(a);
   }
   box.appendChild(div);

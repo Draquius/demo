@@ -43,6 +43,19 @@
   .meta { color: var(--suave); font-size: 13px; }
   .vistas { display: inline-block; background: var(--cor-clara); color: var(--cor); border-radius: 999px; padding: 1px 10px; font-size: 13px; font-weight: 650; }
   .vistas.zero { background: var(--fundo); color: var(--suave); }
+  .bloco-imagens { margin-top: 14px; padding: 14px; border: 1.5px dashed var(--borda); border-radius: 12px; background: #fafbff; }
+  .bloco-imagens > label:first-child { margin-top: 0; }
+  label.arquivo { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 76px; border: 1.5px solid var(--borda); border-radius: 12px; background: #fff; cursor: pointer; text-align: center; font-weight: 650; margin: 6px 0 0; }
+  label.arquivo small { font-weight: 400; color: var(--suave); font-size: 12px; }
+  label.arquivo:hover { border-color: var(--cor); }
+  .miniaturas { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .mini { position: relative; width: 64px; height: 64px; border-radius: 10px; overflow: hidden; border: 1px solid var(--borda); background: #fff; }
+  .mini img { width: 100%; height: 100%; object-fit: cover; }
+  .mini.logo img { object-fit: contain; padding: 4px; }
+  .mini button { position: absolute; top: 2px; right: 2px; width: 22px; height: 22px; border-radius: 50%; border: 0; background: rgba(15,23,42,.75); color: #fff; font-size: 13px; line-height: 22px; padding: 0; cursor: pointer; }
+  .consent { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; font-weight: 400; color: var(--suave); margin-top: 10px; }
+  .consent input { width: 20px; height: 20px; margin-top: 2px; flex: none; }
+  .amostra { display: inline-block; width: 14px; height: 14px; border-radius: 4px; vertical-align: -2px; margin: 0 4px; border: 1px solid var(--borda); }
   [hidden] { display: none !important; }
   @media (max-width: 480px) { .linha { grid-template-columns: 1fr; } }
 </style>
@@ -111,6 +124,28 @@
       </div>
       <p class="meta" style="margin:4px 0 0">Copie do perfil da empresa no Google Maps. Em branco = a prévia não mostra estrelas (nunca invente a nota).</p>
 
+      <div class="bloco-imagens">
+        <label>Imagens <span class="opc">(opcional — deixam a prévia muito mais convincente)</span></label>
+        <div class="linha">
+          <div>
+            <label class="arquivo" for="f-logo">🏷️ Logo<small>PNG, JPG ou WebP</small></label>
+            <input id="f-logo" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+            <div class="miniaturas" id="mini-logo"></div>
+          </div>
+          <div>
+            <label class="arquivo" for="f-fotos">📷 Fotos (até 4)<small>fachada, serviço, equipe</small></label>
+            <input id="f-fotos" type="file" accept="image/png,image/jpeg,image/webp" multiple hidden>
+            <div class="miniaturas" id="mini-fotos"></div>
+          </div>
+        </div>
+        <p class="meta" id="cor-da-logo" hidden></p>
+        <label class="consent" id="consent-imagens" hidden>
+          <input type="checkbox" id="f-direitos">
+          <span>As imagens foram publicadas pela própria empresa (site, Instagram ou fotos do dono no Google), servem só para esta demonstração e eu removo se ela pedir. Evito fotos com pessoas identificáveis.</span>
+        </label>
+        <div class="msg-erro" data-erro="imagens"></div>
+      </div>
+
       <details>
         <summary>Mais detalhes (opcional)</summary>
         <label for="f-titulo">Título da página</label>
@@ -177,9 +212,116 @@ const salvar = (k, v) => { if (guardar) { if (v) guardar.setItem(k, v); else gua
 let chave = ler('chave_previas');
 let corAlterada = false;
 
-async function api(dados) {
+/* ---------- Imagens (logo + até 4 fotos) ---------- */
+const MAX_FOTOS = 4;
+// Cada item: { dataUrl, id } — id preenchido depois do envio (evita reenviar ao tentar de novo).
+const imagens = { logo: null, fotos: [] };
+let corVeioDaLogo = false;
+
+/** Lê o arquivo e reduz no próprio aparelho (logo: PNG até 512 px; fotos: JPG até 1600 px). */
+async function reduzirImagem(arquivo, papel) {
+  if (!/^image\/(png|jpeg|webp)$/.test(arquivo.type)) throw new Error('Use JPG, PNG ou WebP.');
+  if (arquivo.size > 25 * 1024 * 1024) throw new Error('Arquivo grande demais (máx. 25 MB antes de reduzir).');
+  const url = URL.createObjectURL(arquivo);
+  try {
+    const img = await new Promise((ok, falha) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => falha(new Error('Não consegui abrir a imagem.')); i.src = url; });
+    const max = papel === 'logo' ? 512 : 1600;
+    const escala = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(img.naturalWidth * escala));
+    canvas.height = Math.max(1, Math.round(img.naturalHeight * escala));
+    const ctx = canvas.getContext('2d');
+    if (papel !== 'logo') { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height); }
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    const dataUrl = papel === 'logo' ? canvas.toDataURL('image/png') : canvas.toDataURL('image/jpeg', 0.82);
+    return { dataUrl, canvas };
+  } finally { URL.revokeObjectURL(url); }
+}
+
+/** Cor mais marcante da logo (ignora transparente, branco, preto e cinzas), já legível com texto branco. */
+function corDaLogo(canvas) {
+  const { width: w, height: h } = canvas;
+  const d = canvas.getContext('2d').getImageData(0, 0, w, h).data;
+  const contagem = new Map();
+  const passo = Math.max(1, Math.floor((w * h) / 20000));
+  for (let i = 0; i < w * h; i += passo) {
+    const [r, g, b, a] = [d[i * 4], d[i * 4 + 1], d[i * 4 + 2], d[i * 4 + 3]];
+    if (a < 200) continue;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    if (max < 40 || min > 215 || max - min < 40) continue; // preto, branco ou cinza
+    const chave = [r, g, b].map(v => Math.round(v / 24) * 24).join(',');
+    contagem.set(chave, (contagem.get(chave) || 0) + 1);
+  }
+  if (!contagem.size) return null;
+  const [melhor] = [...contagem.entries()].sort((a, b) => b[1] - a[1])[0];
+  const hex = '#' + melhor.split(',').map(v => Math.min(255, Number(v)).toString(16).padStart(2, '0')).join('');
+  return corLegivel(hex);
+}
+
+function desenharMiniaturas() {
+  const mini = (item, classe, remover) => {
+    const div = document.createElement('div'); div.className = 'mini ' + classe;
+    const img = document.createElement('img'); img.src = item.dataUrl; img.alt = '';
+    const x = document.createElement('button'); x.type = 'button'; x.textContent = '×'; x.setAttribute('aria-label', 'Remover imagem');
+    x.addEventListener('click', remover);
+    div.append(img, x); return div;
+  };
+  $('#mini-logo').replaceChildren(...(imagens.logo ? [mini(imagens.logo, 'logo', () => { imagens.logo = null; $('#cor-da-logo').hidden = true;
+    if (corVeioDaLogo) { corVeioDaLogo = false; corAlterada = false; $('#f-cor').value = corPadrao($('#f-nicho').value); }
+    desenharMiniaturas(); })] : []));
+  $('#mini-fotos').replaceChildren(...imagens.fotos.map((f, i) => mini(f, '', () => { imagens.fotos.splice(i, 1); desenharMiniaturas(); })));
+  $('#consent-imagens').hidden = !(imagens.logo || imagens.fotos.length);
+}
+
+function erroImagens(texto) { const el = $('[data-erro=imagens]'); el.textContent = texto || ''; }
+
+$('#f-logo').addEventListener('change', async ev => {
+  const arq = ev.target.files[0]; ev.target.value = '';
+  if (!arq) return;
+  erroImagens('');
+  try {
+    const { dataUrl, canvas } = await reduzirImagem(arq, 'logo');
+    imagens.logo = { dataUrl, id: null };
+    const cor = corDaLogo(canvas);
+    if (cor && !corAlterada) {
+      $('#f-cor').value = cor; corAlterada = true; corVeioDaLogo = true;
+      const p = $('#cor-da-logo'); p.replaceChildren('Cor da marca puxada da logo:', Object.assign(document.createElement('span'), { className: 'amostra', style: `background:${cor}` }), cor);
+      p.hidden = false;
+    }
+    desenharMiniaturas();
+  } catch (e) { erroImagens(e.message); }
+});
+
+$('#f-fotos').addEventListener('change', async ev => {
+  const arqs = [...ev.target.files]; ev.target.value = '';
+  erroImagens('');
+  for (const arq of arqs) {
+    if (imagens.fotos.length >= MAX_FOTOS) { erroImagens(`Máximo de ${MAX_FOTOS} fotos.`); break; }
+    try { const { dataUrl } = await reduzirImagem(arq, 'foto'); imagens.fotos.push({ dataUrl, id: null }); }
+    catch (e) { erroImagens(e.message); }
+  }
+  desenharMiniaturas();
+});
+
+/** Envia para o Drive o que ainda não foi enviado. Retorna { logo, fotos } com os IDs. */
+async function enviarImagens(progresso) {
+  const fila = [...(imagens.logo ? [['logo', imagens.logo]] : []), ...imagens.fotos.map(f => ['foto', f])];
+  let n = 0;
+  for (const [papel, item] of fila) {
+    n++;
+    if (item.id) continue;
+    progresso(`Enviando imagens ${n}/${fila.length}…`);
+    const r = await api({ acao: 'enviarImagem', papel, dados: item.dataUrl }, 60000); // 4G fraco + Drive: dá mais tempo
+    if (r.chaveInvalida) throw Object.assign(new Error('chave'), { chaveInvalida: true });
+    if (!r.ok) throw new Error(r.mensagem || 'Falha ao enviar imagem.');
+    item.id = r.id;
+  }
+  return { logo: imagens.logo ? imagens.logo.id : '', fotos: imagens.fotos.map(f => f.id) };
+}
+
+async function api(dados, tempoMs) {
   const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), 20000);
+  const t = setTimeout(() => ctrl.abort(), tempoMs || 20000);
   try {
     const r = await fetch(ENDPOINT, { method: 'POST', body: JSON.stringify({ chave, ...dados }), signal: ctrl.signal });
     const texto = await r.text();
@@ -226,7 +368,7 @@ $('#trocar-chave').addEventListener('click', () => { chave = ''; salvar('chave_p
 
 /* ---------- Formulário ---------- */
 $('#f-nicho').addEventListener('change', () => { if (!corAlterada) $('#f-cor').value = corPadrao($('#f-nicho').value); });
-$('#f-cor').addEventListener('input', () => { corAlterada = true; });
+$('#f-cor').addEventListener('input', () => { corAlterada = true; corVeioDaLogo = false; });
 $('#f-whatsapp').addEventListener('input', ev => {
   let d = ev.target.value.replace(/\D/g, '').replace(/^0+/, '');
   if (d.length > 11 && d.startsWith('55')) d = d.slice(2);
@@ -287,20 +429,27 @@ $('#f').addEventListener('submit', async ev => {
   if (p.nota && !(nota >= 1 && nota <= 5)) erros.nota = 'Nota de 1 a 5 (ex.: 4,8).';
   if (p.avaliacoes && !/^(\d{1,3}(\.\d{3})+|\d+)$/.test(p.avaliacoes)) erros.avaliacoes = 'Só números (ex.: 120 ou 1.234).';
   if (!erros.avaliacoes && !!p.nota !== !!p.avaliacoes) erros[p.nota ? 'avaliacoes' : 'nota'] = 'Preencha nota e avaliações juntas.';
+  const temImagens = !!(imagens.logo || imagens.fotos.length);
+  if (temImagens && !$('#f-direitos').checked) erros.imagens = 'Confirme que as imagens são da própria empresa.';
   marcarErros(erros);
   aviso('#f-retorno', null);
   if (Object.keys(erros).length) return;
 
   const btn = $('#f-gerar'); btn.disabled = true; btn.textContent = 'Gerando…';
   try {
+    if (temImagens) Object.assign(p, await enviarImagens(t => { btn.textContent = t; }));
+    btn.textContent = 'Gerando…';
     const r = await api({ acao: 'criarPrevia', previa: p });
     if (r.chaveInvalida) { chave = ''; salvar('chave_previas', ''); mostrarTelas(); return aviso('#c-retorno', 'erro', 'A chave mudou. Cole a nova chave.'); }
     if (!r.ok) { if (r.erros) marcarErros(r.erros); return aviso('#f-retorno', 'erro', r.mensagem || 'Confira os campos marcados.'); }
     mostrarResultado(p, r.id);
     $('#f').reset(); corAlterada = false; $('#f-cor').value = corPadrao($('#f-nicho').value);
+    imagens.logo = null; imagens.fotos = []; corVeioDaLogo = false; $('#cor-da-logo').hidden = true; desenharMiniaturas();
     listar();
   } catch (e) {
-    aviso('#f-retorno', 'erro', 'Sem conexão com o servidor. Tente de novo.');
+    if (e.chaveInvalida) { chave = ''; salvar('chave_previas', ''); mostrarTelas(); return aviso('#c-retorno', 'erro', 'A chave mudou. Cole a nova chave.'); }
+    // Imagens já enviadas guardam o ID: tentar de novo não reenvia o que já foi.
+    aviso('#f-retorno', 'erro', e.message && e.message !== 'Failed to fetch' && !/abort/i.test(e.message) ? e.message : 'Sem conexão com o servidor. Tente de novo.');
   } finally { btn.disabled = false; btn.textContent = 'Gerar prévia'; }
 });
 
@@ -396,7 +545,7 @@ $('#c-nome').value = ler('seu_nome') || 'Leonardo';
 $('#f-cor').value = corPadrao($('#f-nicho').value);
 mostrarTelas();
 // Exposto para testes automatizados
-window.GERADOR = { coletarPrevia, lerServicos, whatsDigitos, mensagemPara, linkDaPrevia, listar, get chave() { return chave; } };
+window.GERADOR = { coletarPrevia, lerServicos, whatsDigitos, mensagemPara, linkDaPrevia, listar, imagens, corDaLogo, reduzirImagem, get chave() { return chave; } };
 </script>
 </body>
 </html>

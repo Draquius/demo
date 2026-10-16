@@ -5,7 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>Gerador de prévias</title>
-<link rel="icon" href="data:,">
+<!-- App na tela inicial (PWA): só o gerador; a demo e as prévias não usam -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0f172a">
+<link rel="icon" href="icone-192.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Gerador">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <style>
   :root { --cor: #1d4ed8; --cor-clara: #dbeafe; --fundo: #f1f5f9; --cartao: #fff; --texto: #0f172a; --suave: #475569; --borda: #e2e8f0; --ok: #15803d; --erro: #b91c1c; --whats: #128c7e; }
   * { box-sizing: border-box; }
@@ -810,6 +818,10 @@ $('#l-atualizar').addEventListener('click', () => listar());
 $('#c-nome').value = ler('seu_nome') || 'Leonardo';
 $('#f-cor').value = corPadrao($('#f-nicho').value);
 mostrarTelas();
+// App instalável: o service worker controla só o gerador (escopo "gerador.html"), nunca a demo nem as prévias.
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  addEventListener('load', () => navigator.serviceWorker.register('sw.js', { scope: 'gerador.html' }).catch(() => {}));
+}
 // Exposto para testes automatizados
 window.GERADOR = { numeroBR, coletarPrevia, lerServicos, whatsDigitos, mensagemPara, linkDaPrevia, listar, imagens, corDaLogo, reduzirImagem, PACOTES, mensagemProposta, mensagemSeguimento, get chave() { return chave; } };
 </script>

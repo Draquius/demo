@@ -1,0 +1,20 @@
+{
+  "name": "LeonTech — Gerador",
+  "short_name": "Gerador",
+  "description": "Gerador de prévias e funil de vendas da LeonTech (uso interno).",
+  "id": "gerador.html",
+  "start_url": "gerador.html",
+  "scope": "gerador.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "theme_color": "#0f172a",
+  "background_color": "#f1f5f9",
+  "icons": [
+    { "src": "icone-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icone-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icone-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

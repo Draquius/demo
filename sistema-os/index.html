@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Orçamentos e OS — demonstração LeonTech</title>
+<meta name="description" content="Demonstração do sistema de orçamentos e ordens de serviço da LeonTech, com empresa fictícia.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#081e4a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icone-192.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+<a class="pular" href="#app">Pular para o conteúdo</a>
+<div class="faixa-demo" role="note">
+  <span><strong>Demonstração</strong> · empresa fictícia · os dados ficam só neste aparelho</span>
+  <span class="controles">
+    <label><span class="vis-oculto">Tipo de negócio</span>
+      <select id="nicho">
+        <option value="oficina">Oficina mecânica</option>
+        <option value="celular">Assistência de celular</option>
+        <option value="arcondicionado">Ar-condicionado</option>
+        <option value="chaveiro">Chaveiro</option>
+      </select>
+    </label>
+    <button type="button" id="zerar">Zerar demo</button>
+  </span>
+</div>
+<header class="topo">
+  <div class="marca-empresa">
+    <span class="logo-empresa" aria-hidden="true"></span>
+    <div><strong id="nomeEmpresa">Auto Center Exemplo</strong><small id="nichoEmpresa">Oficina mecânica</small></div>
+  </div>
+  <nav class="abas" aria-label="Seções">
+    <a href="#painel">Painel</a>
+    <a href="#ordens">Ordens</a>
+    <a href="#nova" class="aba-nova">+ Orçamento</a>
+  </nav>
+</header>
+<main id="app" class="conteudo"></main>
+<div id="aviso" class="aviso" role="status" aria-live="polite"></div>
+<footer class="rodape">
+  Sistema de orçamentos e ordens de serviço por <a href="https://www.leontech.dev.br" target="_blank" rel="noopener">LeonTech</a> ·
+  <a href="https://wa.me/5531992868113?text=Ol%C3%A1!%20Vi%20a%20demonstra%C3%A7%C3%A3o%20do%20sistema%20de%20or%C3%A7amentos%20e%20quero%20saber%20mais." target="_blank" rel="noopener">Quero para o meu negócio</a>
+</footer>
+<script src="sistema.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

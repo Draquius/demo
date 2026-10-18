@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contato · Reforma Fácil Exemplo</title>
+<meta name="description" content="Peça um orçamento à Reforma Fácil Exemplo (empresa fictícia) pelo WhatsApp.">
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="site.css">
+</head>
+<body>
+<a class="pular" href="#conteudo">Pular para o conteúdo</a>
+<div class="faixa-demo" role="note">Modelo de site institucional · empresa fictícia · <a href="https://www.leontech.dev.br" target="_blank" rel="noopener">feito pela LeonTech</a></div>
+<header class="topo">
+  <div class="container">
+    <a class="marca" href="index.html"><span class="simbolo" aria-hidden="true">R</span>Reforma Fácil</a>
+    <button type="button" class="botao-menu" aria-expanded="false" aria-controls="menu">Menu</button>
+    <nav class="menu" id="menu" aria-label="Páginas">
+      <ul>
+        <li><a href="index.html">Início</a></li>
+        <li><a href="sobre.html">Sobre</a></li>
+        <li><a href="servicos.html">Serviços</a></li>
+        <li><a href="galeria.html">Galeria</a></li>
+        <li><a href="contato.html">Contato</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main id="conteudo">
+  <div class="cabeca-pagina">
+    <div class="container">
+      <p class="migalha"><a href="index.html">Início</a> › Contato</p>
+      <h1>Peça seu orçamento</h1>
+      <p>Preencha e toque em enviar: a mensagem abre pronta no WhatsApp. Nada é gravado neste site.</p>
+    </div>
+  </div>
+
+  <section class="bloco">
+    <div class="container dois">
+      <form id="formContato" class="form-contato" novalidate>
+        <div class="campo"><label for="nome">Nome</label><input id="nome" name="nome" autocomplete="name" required></div>
+        <div class="campo"><label for="telefone">Telefone / WhatsApp</label><input id="telefone" name="telefone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(31) 99999-9999" required></div>
+        <div class="campo"><label for="servico">Serviço</label>
+          <select id="servico" name="servico" required>
+            <option value="">Escolha…</option>
+            <option>Reforma de banheiro</option><option>Reforma de cozinha</option><option>Pisos e revestimentos</option>
+            <option>Pintura</option><option>Pequenos reparos</option><option>Outro</option>
+          </select></div>
+        <div class="campo"><label for="bairro">Bairro (opcional)</label><input id="bairro" name="bairro"></div>
+        <div class="campo"><label for="mensagem">O que você precisa?</label><textarea id="mensagem" name="mensagem" rows="4" placeholder="Ex.: trocar o piso do banheiro de 4 m² e o box"></textarea></div>
+        <div class="campo"><label><input type="checkbox" name="consentimento"> Autorizo o contato pelo telefone informado para responder este pedido.</label></div>
+        <p id="errosContato" class="erros" role="alert"></p>
+        <button type="submit" class="btn btn-whats">Enviar pelo WhatsApp</button>
+        <p style="font-size:13px;color:var(--fraco);margin:10px 0 0">Na demonstração, a mensagem vai para o WhatsApp da LeonTech.</p>
+      </form>
+      <div class="contato-info">
+        <h2 class="titulo-secao">Atendimento</h2>
+        <p><strong>WhatsApp:</strong> no site do cliente, o número dele</p>
+        <p><strong>Horário:</strong> seg. a sex., 8h às 18h · sáb., 8h às 12h</p>
+        <p><strong>Região:</strong> Belo Horizonte e região (exemplo)</p>
+        <p><strong>Endereço:</strong> se o cliente atende no local, o endereço e o link do Google Maps</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="container">
+    <div class="colunas">
+      <div><h3>Reforma Fácil Exemplo</h3><p>Reformas e acabamentos.</p><p>Empresa fictícia, usada só como modelo.</p></div>
+      <div><h3>Páginas</h3><p><a href="sobre.html">Sobre</a> · <a href="servicos.html">Serviços</a></p><p><a href="galeria.html">Galeria</a> · <a href="contato.html">Contato</a></p></div>
+      <div><h3>Atendimento</h3><p>Seg. a sex., 8h às 18h · Sáb., 8h às 12h</p><p>Belo Horizonte e região</p></div>
+    </div>
+    <p class="credito">Modelo de site feito pela <a href="https://www.leontech.dev.br" target="_blank" rel="noopener">LeonTech</a>.</p>
+  </div>
+</footer>
+<a class="whats-flutuante" href="contato.html" aria-label="Pedir orçamento pelo WhatsApp">✆</a>
+<script src="site.js"></script>
+</body>
+</html>

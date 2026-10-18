@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Agenda — demonstração LeonTech</title>
+<meta name="description" content="Demonstração da agenda com confirmação pelo WhatsApp da LeonTech, com empresa fictícia.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#081e4a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icone-192.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+<a class="pular" href="#app">Pular para o conteúdo</a>
+<div class="faixa-demo" role="note">
+  <span><strong>Demonstração</strong> · empresa fictícia · dados só neste aparelho · mensagens de teste vão para o WhatsApp da LeonTech</span>
+  <span class="controles">
+    <label><span class="vis-oculto">Tipo de negócio</span>
+      <select id="nicho">
+        <option value="barbearia">Barbearia</option>
+        <option value="salao">Salão de beleza</option>
+        <option value="estetica">Estética</option>
+        <option value="petshop">Banho e tosa</option>
+      </select>
+    </label>
+    <button type="button" id="zerar">Zerar demo</button>
+  </span>
+</div>
+<header class="topo">
+  <div class="marca-empresa">
+    <span class="logo-empresa" aria-hidden="true"></span>
+    <div><strong id="nomeEmpresa">Barbearia Exemplo</strong><small id="nichoEmpresa">Barbearia</small></div>
+  </div>
+  <nav class="abas" aria-label="Seções">
+    <a href="#agendar">Agendar <small>(cliente)</small></a>
+    <a href="#agenda">Agenda do dia <small>(dono)</small></a>
+  </nav>
+</header>
+<main id="app" class="conteudo"></main>
+<div id="aviso" class="aviso" role="status" aria-live="polite"></div>
+<footer class="rodape">
+  Agenda com confirmação por <a href="https://www.leontech.dev.br" target="_blank" rel="noopener">LeonTech</a> ·
+  <a href="https://wa.me/5531992868113?text=Ol%C3%A1!%20Vi%20a%20demonstra%C3%A7%C3%A3o%20da%20agenda%20e%20quero%20saber%20mais." target="_blank" rel="noopener">Quero para o meu negócio</a>
+</footer>
+<script src="agenda.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

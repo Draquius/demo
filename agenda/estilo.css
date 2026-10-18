@@ -1,0 +1,101 @@
+/* Agenda com confirmação — demonstração LeonTech. A cor --marca muda com o nicho. */
+:root {
+  --marinho: #081e4a; --acao: #075e8c; --ciano: #00b9e8; --suave: #f4f8ff;
+  --texto: #0f172a; --cinza: #475569; --fraco: #64748b; --borda: #dbe3f0; --fundo: #f1f5f9;
+  --marca: #1f2937; --whats: #128c7e; --erro: #b91c1c; --ok: #15803d; --raio: 14px;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif; color: var(--texto); background: var(--fundo); line-height: 1.5; }
+a { color: var(--acao); }
+button, input, select { font: inherit; color: inherit; }
+.vis-oculto { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.pular { position: absolute; left: -999px; top: 8px; background: #fff; padding: 8px 12px; z-index: 10; }
+.pular:focus { left: 8px; }
+:focus-visible { outline: 3px solid var(--ciano); outline-offset: 2px; }
+.nw { white-space: nowrap; }
+.fraco { color: var(--fraco); }
+.pequeno { font-size: 12.5px; }
+
+.faixa-demo { background: var(--marinho); color: #e2e8f0; font-size: 13px; padding: 8px 16px; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; }
+.faixa-demo .controles { display: flex; gap: 8px; align-items: center; }
+.faixa-demo select, .faixa-demo button { background: #12306b; color: #fff; border: 1px solid #2a4a8a; border-radius: 8px; padding: 6px 10px; font-size: 13px; min-height: 36px; cursor: pointer; }
+
+.topo { background: #fff; border-bottom: 1px solid var(--borda); padding: 12px 16px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 5; }
+.marca-empresa { display: flex; gap: 10px; align-items: center; min-width: 0; }
+.logo-empresa { width: 38px; height: 38px; border-radius: 10px; background: var(--marca); box-shadow: inset 0 0 0 3px rgba(255,255,255,.25); flex: none; }
+.marca-empresa strong { display: block; font-size: 16px; }
+.marca-empresa small { color: var(--fraco); font-size: 12px; }
+.abas { display: flex; gap: 4px; flex-wrap: wrap; }
+.abas a { text-decoration: none; color: var(--cinza); padding: 8px 12px; border-radius: 10px; font-weight: 600; font-size: 14px; min-height: 40px; display: inline-flex; align-items: center; gap: 4px; }
+.abas a small { font-weight: 500; color: var(--fraco); }
+.abas a.ativa { background: var(--suave); color: var(--marinho); box-shadow: inset 0 -3px 0 var(--marca); }
+
+.conteudo { max-width: 760px; margin: 0 auto; padding: 16px 16px 40px; }
+.visao { background: #fff8e1; border: 1px solid #f5e1a4; color: #6b5200; border-radius: 10px; padding: 8px 12px; font-size: 13.5px; margin: 0 0 12px; }
+.titulo { font-size: 22px; margin: 4px 0 12px; }
+
+.passo { background: #fff; border: 1px solid var(--borda); border-radius: var(--raio); padding: 14px; margin: 0 0 12px; }
+.passo h2 { font-size: 16px; margin: 0 0 10px; display: flex; align-items: center; gap: 8px; }
+.passo .n { width: 24px; height: 24px; border-radius: 50%; background: var(--marca); color: #fff; font-size: 13px; display: inline-grid; place-items: center; }
+.opcoes { display: flex; flex-wrap: wrap; gap: 8px; }
+.servicos-grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(200px, 100%), 1fr)); }
+.opcao { border: 1.5px solid var(--borda); background: #fff; border-radius: 12px; padding: 10px 12px; text-align: left; cursor: pointer; min-height: 44px; display: grid; gap: 2px; }
+.opcao small { color: var(--fraco); font-size: 12.5px; }
+.opcao.chip { display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; padding: 8px 14px; font-weight: 600; }
+.opcao.dia { text-align: center; min-width: 74px; }
+.opcao.dia small { text-transform: capitalize; }
+.opcao.escolhida { border-color: var(--marca); background: var(--marca); color: #fff; }
+.opcao.escolhida small { color: rgba(255,255,255,.85); }
+.dias { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 4px; }
+.campo { display: grid; gap: 4px; margin: 8px 0; }
+.campo span { font-size: 13px; color: var(--cinza); font-weight: 600; }
+.campo input { width: 100%; border: 1px solid var(--borda); border-radius: 10px; padding: 10px 12px; background: #fff; min-height: 44px; }
+.resumo-pedido { background: var(--suave); border-radius: 10px; padding: 10px 12px; margin: 10px 0; font-size: 14.5px; overflow-wrap: anywhere; }
+.sucesso p { overflow-wrap: anywhere; }
+.erros { color: var(--erro); }
+.erros ul { margin: 6px 0; padding-left: 18px; }
+
+.botao { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid var(--borda); background: #fff; color: var(--texto); padding: 9px 14px; border-radius: 12px; font-weight: 600; text-decoration: none; cursor: pointer; min-height: 44px; font-size: 14.5px; }
+.botao.principal { background: var(--marca); border-color: var(--marca); color: #fff; }
+.botao.whats { background: var(--whats); border-color: var(--whats); color: #fff; }
+.botao.perigo { color: var(--erro); border-color: #f3b9b9; }
+.botao.largo { width: 100%; margin: 6px 0; }
+.acoes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+
+.sucesso { background: #fff; border: 1px solid var(--borda); border-radius: var(--raio); padding: 24px 18px; text-align: center; }
+.icone-ok { width: 56px; height: 56px; border-radius: 50%; background: #dcf5e7; color: var(--ok); font-size: 30px; display: grid; place-items: center; margin: 0 auto 8px; }
+.sucesso .acoes { justify-content: center; }
+
+.navega-dia { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.dia-atual { flex: 1; text-align: center; }
+.dia-atual .titulo { margin: 0; text-transform: capitalize; }
+.dia-atual small { color: var(--fraco); }
+.cartoes { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }
+@media (min-width: 640px) { .cartoes { grid-template-columns: repeat(4, 1fr); } }
+.cartao { background: #fff; border: 1px solid var(--borda); border-top: 4px solid var(--marca); border-radius: 12px; padding: 10px 12px; }
+.cartao strong { display: block; font-size: 20px; }
+.cartao span { color: var(--cinza); font-size: 13px; }
+.busca input { width: 100%; padding: 11px 14px; border: 1px solid var(--borda); border-radius: 12px; background: #fff; min-height: 44px; margin-bottom: 10px; }
+.lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.horario { display: grid; grid-template-columns: 64px 1fr; gap: 10px; background: #fff; border: 1px solid var(--borda); border-left: 4px solid var(--marca); border-radius: 12px; padding: 10px 12px; }
+.horario .info { min-width: 0; overflow-wrap: anywhere; }
+.horario.cancelado { opacity: .6; border-left-color: #cbd5e1; }
+.horario .hora strong { display: block; font-size: 18px; }
+.horario .hora small { color: var(--fraco); font-size: 12px; }
+.horario .linha1 { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: space-between; }
+.horario .obs { font-size: 13.5px; color: var(--cinza); margin-top: 4px; }
+.vazio { padding: 18px 0; }
+
+.selo { display: inline-block; font-size: 12px; font-weight: 700; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
+.selo-pendente { background: #fff4d6; color: #7a5a00; }
+.selo-confirmado { background: #d9f3fb; color: #075e8c; }
+.selo-concluido { background: #dcf5e7; color: #146c43; }
+.selo-faltou { background: #fde2e2; color: #9b1c1c; }
+.selo-cancelado { background: #e2e8f0; color: #334155; }
+
+.aviso { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%) translateY(120px); background: var(--marinho); color: #fff; padding: 12px 16px; border-radius: 12px; max-width: calc(100% - 32px); transition: transform .25s; z-index: 20; box-shadow: 0 8px 24px rgba(8,30,74,.25); }
+.aviso.mostrar { transform: translateX(-50%) translateY(0); }
+.aviso.erro { background: var(--erro); }
+.rodape { text-align: center; font-size: 13px; color: var(--fraco); padding: 16px 16px 32px; }
+@media (prefers-reduced-motion: reduce) { .aviso { transition: none; } }

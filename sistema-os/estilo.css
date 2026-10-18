@@ -45,6 +45,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .bloco h2 { font-size: 16px; margin: 0 0 8px; }
 .lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .linha { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; background: #fff; border: 1px solid var(--borda); border-radius: 12px; padding: 10px 12px; text-decoration: none; color: var(--texto); min-height: 56px; }
+.linha .quem, .doc-dados dd, .doc-itens td { min-width: 0; overflow-wrap: anywhere; }
 .linha .num { color: var(--fraco); font-size: 13px; font-variant-numeric: tabular-nums; }
 .linha .quem strong { display: block; }
 .linha .quem small, .linha .fim small { color: var(--fraco); font-size: 12.5px; }

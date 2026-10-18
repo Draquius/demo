@@ -32,28 +32,28 @@
   /* Configuração por nicho: empresa fictícia, nome do campo "equipamento" e itens de exemplo. */
   var NICHOS_OS = {
     oficina: {
-      rotulo: 'Oficina mecânica', empresa: 'Auto Center Exemplo', whatsapp: '5531999990001', cor: '#c2410c',
+      rotulo: 'Oficina mecânica', empresa: 'Auto Center Exemplo', whatsapp: '5531992868113', cor: '#c2410c',
       equipamento: 'Veículo (modelo e placa)', exemploEquipamento: 'Ex.: Gol 2015 · ABC1D23',
       problema: 'Ex.: barulho ao frear, revisão dos 60 mil km…',
       itens: [['Revisão completa (mão de obra)', 280], ['Troca de óleo e filtro', 190], ['Pastilhas de freio (par)', 160],
         ['Alinhamento e balanceamento', 120], ['Diagnóstico com scanner', 90], ['Troca de bateria', 450]]
     },
     celular: {
-      rotulo: 'Assistência de celular', empresa: 'Cell Fix Exemplo', whatsapp: '5531999990002', cor: '#4338ca',
+      rotulo: 'Assistência de celular', empresa: 'Cell Fix Exemplo', whatsapp: '5531992868113', cor: '#4338ca',
       equipamento: 'Aparelho (marca e modelo)', exemploEquipamento: 'Ex.: Galaxy A54 · tela trincada',
       problema: 'Ex.: tela trincada, não carrega, molhou…',
       itens: [['Troca de tela', 450], ['Troca de bateria', 220], ['Troca de conector de carga', 160],
         ['Limpeza após contato com líquido', 150], ['Película de vidro', 40], ['Diagnóstico', 50]]
     },
     arcondicionado: {
-      rotulo: 'Ar-condicionado', empresa: 'Clima Bom Exemplo', whatsapp: '5531999990003', cor: '#0e7490',
+      rotulo: 'Ar-condicionado', empresa: 'Clima Bom Exemplo', whatsapp: '5531992868113', cor: '#0e7490',
       equipamento: 'Equipamento (tipo e BTUs)', exemploEquipamento: 'Ex.: Split 12.000 BTUs · 3º andar',
       problema: 'Ex.: instalação nova, não gela, pingando…',
       itens: [['Instalação de split até 12.000 BTUs', 550], ['Limpeza completa (higienização)', 220], ['Carga de gás', 300],
         ['Suporte de condensadora', 120], ['Tubulação extra (metro)', 60], ['Visita técnica e diagnóstico', 90]]
     },
     chaveiro: {
-      rotulo: 'Chaveiro', empresa: 'Chaveiro Exemplo', whatsapp: '5531999990004', cor: '#a16207',
+      rotulo: 'Chaveiro', empresa: 'Chaveiro Exemplo', whatsapp: '5531992868113', cor: '#a16207',
       equipamento: 'Local e fechadura', exemploEquipamento: 'Ex.: porta de apartamento · fechadura tetra',
       problema: 'Ex.: porta trancada, trocar segredo, cópia de chave…',
       itens: [['Abertura de porta', 150], ['Troca de segredo do cilindro', 90], ['Instalação de fechadura', 120],

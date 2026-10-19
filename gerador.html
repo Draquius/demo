@@ -106,6 +106,7 @@
   <section class="cartao" id="sec-nova" hidden>
     <h2>Nova prévia</h2>
     <form id="f" novalidate>
+      <div id="f-da-lista" hidden></div>
       <label for="f-empresa">Nome da empresa</label>
       <input id="f-empresa" maxlength="60" autocomplete="off" placeholder="Ex.: Auto Center São José">
       <div class="msg-erro" data-erro="empresa"></div>
@@ -459,9 +460,11 @@ function marcarErros(erros) {
   });
 }
 
-function mensagemPara(empresa, link, nicho) {
+/** abertura (opcional, vem da lista de prospecção): frase personalizada sobre a empresa, no lugar de "Vi a X no Google". */
+function mensagemPara(empresa, link, nicho, abertura) {
   const nome = ler('seu_nome') || 'Leonardo';
   const pedido = (NICHOS[nicho] || NICHOS.oficina).pedido || 'pedidos de orçamento';
+  if (abertura) return `Oi, tudo bem? Sou ${nome}, desenvolvedor aqui de BH. ${abertura}\n\nMontei uma prévia de como poderia ficar uma página para receber ${pedido} direto no WhatsApp de vocês:\n\n${link}\n\nSe fizer sentido, te explico em 10 minutos como funciona. Se não for o momento, sem problema: é só me avisar que não mando mais mensagem.`;
   return `Oi, tudo bem? Sou ${nome}, desenvolvedor aqui de BH. Vi a ${empresa} no Google e montei uma prévia de como poderia ficar uma página para receber ${pedido} direto no WhatsApp de vocês:\n\n${link}\n\nSe fizer sentido, te explico em 10 minutos como funciona. Se não for o momento, sem problema: é só me avisar que não mando mais mensagem.`;
 }
 
@@ -482,13 +485,15 @@ $('#f').addEventListener('submit', async ev => {
   if (Object.keys(erros).length) return;
 
   const btn = $('#f-gerar'); btn.disabled = true; btn.textContent = 'Gerando…';
+  const abertura = daLista && daLista.empresa === p.empresa ? daLista.abertura : '';
   try {
     if (temImagens) Object.assign(p, await enviarImagens(t => { btn.textContent = t; }));
     btn.textContent = 'Gerando…';
     const r = await api({ acao: 'criarPrevia', previa: p });
     if (r.chaveInvalida) { chave = ''; salvar('chave_previas', ''); mostrarTelas(); return aviso('#c-retorno', 'erro', 'A chave mudou. Cole a nova chave.'); }
     if (!r.ok) { if (r.erros) marcarErros(r.erros); return aviso('#f-retorno', 'erro', r.mensagem || 'Confira os campos marcados.'); }
-    mostrarResultado(p, r.id);
+    mostrarResultado(p, r.id, abertura);
+    daLista = null; $('#f-da-lista').hidden = true;
     $('#f').reset(); corAlterada = false; $('#f-cor').value = corPadrao($('#f-nicho').value);
     imagens.logo = null; imagens.fotos = []; corVeioDaLogo = false; $('#cor-da-logo').hidden = true; desenharMiniaturas();
     listar();
@@ -503,12 +508,12 @@ $('#f').addEventListener('submit', async ev => {
 let resultado = null;
 function linkDaPrevia(id) { return `${BASE_PREVIA}?p=${encodeURIComponent(id)}`; }
 
-function mostrarResultado(p, id) {
+function mostrarResultado(p, id, abertura) {
   const link = linkDaPrevia(id);
   resultado = { p, id, link };
   $('#r-link').textContent = link;
   $('#r-abrir').href = link;
-  $('#r-msg').value = mensagemPara(p.empresa, link, p.nicho);
+  $('#r-msg').value = mensagemPara(p.empresa, link, p.nicho, abertura);
   atualizarBotaoEnviar();
   aviso('#r-retorno', null);
   $('#sec-resultado').hidden = false;
@@ -814,16 +819,55 @@ $('#v-salvar').addEventListener('click', () => {
 });
 $('#l-atualizar').addEventListener('click', () => listar());
 
+/* ---------- Envio rápido: dados da lista de prospecção no link ----------
+ * gerador.html#empresa=…&nicho=…&bairro=…&whatsapp=…&nota=…&avaliacoes=…&endereco=…&abertura=…
+ * Fica depois do "#": não vai para nenhum servidor. Só preenche o formulário; nada é gerado sem você tocar em "Gerar prévia".
+ */
+let daLista = null;
+function lerDadosDoLink(hash) {
+  const h = new URLSearchParams(String(hash || '').replace(/^#/, ''));
+  const v = (k, max) => (h.get(k) || '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, max);
+  const d = {
+    empresa: v('empresa', 60), nicho: v('nicho', 24), bairro: v('bairro', 40), whatsapp: v('whatsapp', 20),
+    nota: v('nota', 3), avaliacoes: v('avaliacoes', 7), endereco: v('endereco', 120), abertura: v('abertura', 300)
+  };
+  if (d.empresa.length < 2) return null;
+  if (!NICHOS[d.nicho]) d.nicho = '';
+  return d;
+}
+function aplicarDadosDoLink(d) {
+  daLista = d;
+  $('#f-empresa').value = d.empresa;
+  if (d.nicho) { $('#f-nicho').value = d.nicho; if (!corAlterada) $('#f-cor').value = corPadrao(d.nicho); }
+  $('#f-bairro').value = d.bairro;
+  $('#f-whatsapp').value = d.whatsapp; $('#f-whatsapp').dispatchEvent(new Event('input'));
+  $('#f-nota').value = d.nota; $('#f-avaliacoes').value = d.avaliacoes;
+  $('#f-endereco').value = d.endereco;
+  const box = $('#f-da-lista'); box.replaceChildren();
+  const div = document.createElement('div'); div.className = 'aviso ok';
+  div.textContent = `Dados de "${d.empresa}" carregados da sua lista.${d.nicho ? '' : ' Escolha o nicho.'} Confira e toque em Gerar prévia.${d.abertura ? ' A mensagem já sai com a frase personalizada.' : ''}`;
+  box.appendChild(div); box.hidden = false;
+}
+function carregarDoLink() {
+  const d = lerDadosDoLink(location.hash);
+  if (!d) return;
+  aplicarDadosDoLink(d);
+  // Tira os dados do endereço (não ficam no histórico nem são reaplicados por engano).
+  try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+}
+addEventListener('hashchange', carregarDoLink);
+
 /* ---------- Início ---------- */
 $('#c-nome').value = ler('seu_nome') || 'Leonardo';
 $('#f-cor').value = corPadrao($('#f-nicho').value);
+carregarDoLink();
 mostrarTelas();
 // App instalável: o service worker controla só o gerador (escopo "gerador.html"), nunca a demo nem as prévias.
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
   addEventListener('load', () => navigator.serviceWorker.register('sw.js', { scope: 'gerador.html' }).catch(() => {}));
 }
 // Exposto para testes automatizados
-window.GERADOR = { numeroBR, coletarPrevia, lerServicos, whatsDigitos, mensagemPara, linkDaPrevia, listar, imagens, corDaLogo, reduzirImagem, PACOTES, mensagemProposta, mensagemSeguimento, get chave() { return chave; } };
+window.GERADOR = { lerDadosDoLink, aplicarDadosDoLink, numeroBR, coletarPrevia, lerServicos, whatsDigitos, mensagemPara, linkDaPrevia, listar, imagens, corDaLogo, reduzirImagem, PACOTES, mensagemProposta, mensagemSeguimento, get chave() { return chave; } };
 </script>
 </body>
 </html>

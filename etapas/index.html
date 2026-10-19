@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sistema de etapas — demonstração LeonTech</title>
+<meta name="description" content="Demonstração do sistema de etapas da LeonTech: QR code no veículo, checklist por etapa, quadro da oficina e acompanhamento pelo cliente. Empresa fictícia.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#081e4a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icone-192.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+<a class="pular" href="#app">Pular para o conteúdo</a>
+<div class="faixa-demo" role="note">
+  <span><strong>Demonstração</strong> · empresa fictícia · os dados ficam só neste aparelho</span>
+  <span class="controles">
+    <label><span class="vis-oculto">Tipo de negócio</span>
+      <select id="nicho">
+        <option value="martelinho">Martelinho de ouro</option>
+        <option value="funilaria">Funilaria e pintura</option>
+        <option value="estetica">Estética automotiva</option>
+        <option value="assistencia">Assistência técnica</option>
+      </select>
+    </label>
+    <button type="button" id="zerar">Zerar demo</button>
+  </span>
+</div>
+<header class="topo">
+  <div class="marca-empresa">
+    <span class="logo-empresa" aria-hidden="true"></span>
+    <div><strong id="nomeEmpresa">Martelinho de Ouro Exemplo</strong><small id="nichoEmpresa">Martelinho de ouro</small></div>
+  </div>
+  <nav class="abas" aria-label="Seções">
+    <a href="#quadro">Quadro</a>
+    <a href="#ler">Ler QR</a>
+    <a href="#novo" class="aba-nova">+ Entrada</a>
+  </nav>
+</header>
+<main id="app" class="conteudo"></main>
+<div id="aviso" class="aviso" role="status" aria-live="polite"></div>
+<footer class="rodape">
+  Sistema de etapas por <a href="https://www.leontech.dev.br" target="_blank" rel="noopener">LeonTech</a> ·
+  <a href="https://wa.me/5531992868113?text=Ol%C3%A1!%20Vi%20a%20demonstra%C3%A7%C3%A3o%20do%20sistema%20de%20etapas%20e%20quero%20saber%20mais." target="_blank" rel="noopener">Quero para o meu negócio</a>
+</footer>
+<script src="qr.js"></script>
+<script src="etapas.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

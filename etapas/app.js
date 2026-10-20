@@ -16,7 +16,13 @@
     });
   }
   function cfg() { return E.cfgDe(estado); }
-  function gravar() { E.salvar(estado); }
+  /* Avisa quando o aparelho deixa de salvar (memória cheia ou bloqueada); os dados continuam na tela aberta. */
+  function gravar() {
+    var ok = E.salvar(estado);
+    if (!ok && !semArmazenamento) aviso('Não consegui salvar neste aparelho (memória cheia ou bloqueada). O que você fez vale só enquanto esta tela estiver aberta.', 'erro');
+    semArmazenamento = !ok;
+    return ok;
+  }
   function lerPref(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
   function salvarPref(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
   function aviso(msg, tipo) {
@@ -242,7 +248,8 @@
     else { rota = 'quadro'; html = telaQuadro(); }
     if (rota !== 'item') ultimoConcluido = null;
     pintarCabecalho(rota);
-    raiz.innerHTML = html + (semArmazenamento ? '<p class="erro-caixa">Este navegador não deixa salvar dados (aba anônima?). A demonstração funciona, mas é apagada ao fechar.</p>' : '');
+    raiz.innerHTML = (estado.avisoCarga ? '<p class="erro-caixa" role="alert">' + esc(estado.avisoCarga) + '</p>' : '') + html +
+      (semArmazenamento ? '<p class="erro-caixa" role="alert">Este aparelho não está salvando os dados (memória cheia, bloqueio ou aba anônima). A demonstração funciona, mas o que você fizer é apagado ao fechar.</p>' : '');
     var h1 = raiz.querySelector('h1'); if (h1 && render.focar) h1.focus();
     render.focar = true;
   }

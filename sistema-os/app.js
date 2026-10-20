@@ -16,7 +16,13 @@
   }
   function cfg() { return S.NICHOS_OS[estado.nicho]; }
   function empresa() { return S.empresaDo(estado); }
-  function gravar() { S.salvar(estado); }
+  /* Avisa quando o aparelho deixa de salvar (memória cheia ou bloqueada); os dados continuam na tela aberta. */
+  function gravar() {
+    var ok = S.salvar(estado);
+    if (!ok && !semArmazenamento) aviso('Não consegui salvar neste aparelho (memória cheia ou bloqueada). O que você fez vale só enquanto esta tela estiver aberta.', 'erro');
+    semArmazenamento = !ok;
+    return ok;
+  }
   function ordemPorId(id) { return estado.ordens.filter(function (o) { return o.id === id; })[0]; }
   function selo(st) { return '<span class="selo selo-' + esc(st) + '">' + esc(S.rotuloStatus(st)) + '</span>'; }
   function aviso(msg, tipo) {

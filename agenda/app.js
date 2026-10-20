@@ -14,7 +14,13 @@
     return String(t == null ? '' : t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; });
   }
   function cfg() { return A.cfgDe(estado); }
-  function gravar() { A.salvar(estado); }
+  /* Avisa quando o aparelho deixa de salvar (memória cheia ou bloqueada); os dados continuam na tela aberta. */
+  function gravar() {
+    var ok = A.salvar(estado);
+    if (!ok && !semArmazenamento) aviso('Não consegui salvar neste aparelho (memória cheia ou bloqueada). O que você fez vale só enquanto esta tela estiver aberta.', 'erro');
+    semArmazenamento = !ok;
+    return ok;
+  }
   /* Hoje, se estiver aberto; senão, o próximo dia com expediente (a demo tem horários nele). */
   function diaInicial() { return A.proximosDias(estado, new Date(), 1)[0] || A.dataISO(new Date()); }
   function novoPedido() { return { servicoId: '', profissional: '', data: '', hora: '', cliente: { nome: '', whatsapp: '' }, observacoes: '' }; }

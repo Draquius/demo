@@ -144,7 +144,7 @@
     avarias = avarias.filter(function (a, i) { return avarias.indexOf(a) === i; }).slice(0, MAX.avarias);
     if (!avarias.length) erros.avarias = 'Liste pelo menos um item (' + (cfg.rotuloAvarias || 'avarias').toLowerCase() + ').';
     var previsao = String(dados.previsao || '');
-    if (previsao && !/^\d{4}-\d{2}-\d{2}$/.test(previsao)) erros.previsao = 'Data inválida.';
+    if (previsao && !dataValida(previsao)) erros.previsao = 'Data inválida.';
     return {
       erros: erros, ok: !Object.keys(erros).length,
       dados: { nome: nome, whatsapp: normalizarWhats(whats), modelo: modelo, cor: limpar(dados.cor, MAX.cor), placa: placa, avarias: avarias, previsao: previsao, obs: limpar(dados.obs, MAX.obs) }
@@ -225,6 +225,13 @@
     var d = Math.floor(h / 24);
     return d + (d === 1 ? ' dia' : ' dias');
   }
+  /* "AAAA-MM-DD" de um dia que existe (recusa 31/02 e 29/02 fora de ano bissexto). */
+  function dataValida(iso) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || ''));
+    if (!m) return false;
+    var a = +m[1], me = +m[2], d = +m[3], dt = new Date(a, me - 1, d);
+    return a >= 2000 && a <= 2100 && dt.getFullYear() === a && dt.getMonth() === me - 1 && dt.getDate() === d;
+  }
   function dataISO(d) { function p(n) { return (n < 10 ? '0' : '') + n; } return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); }
   function dataBR(iso) { var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || ''); return m ? m[3] + '/' + m[2] : ''; }
   function horaBR(iso) { var d = new Date(iso); if (isNaN(d)) return ''; function p(n) { return (n < 10 ? '0' : '') + n; } return p(d.getDate()) + '/' + p(d.getMonth() + 1) + ' ' + p(d.getHours()) + 'h' + p(d.getMinutes()); }
@@ -261,8 +268,9 @@
     // Telefone só quando o texto é só números (senão os números da placa achariam telefones).
     var tel = /^[\d ]+$/.test(t) && tp.length >= 4 ? tp : '';
     return estado.itens.filter(function (it) {
-      return semAcento(it.cliente.nome).indexOf(t) > -1 || semAcento(it.modelo).indexOf(t) > -1 ||
-        (tp && it.placa.toLowerCase().indexOf(tp) > -1) || String(it.numero) === t || (tel && soDigitos(it.cliente.whatsapp).indexOf(tel) > -1);
+      var cli = it.cliente || {};
+      return semAcento(cli.nome).indexOf(t) > -1 || semAcento(it.modelo).indexOf(t) > -1 ||
+        (tp && String(it.placa || '').toLowerCase().indexOf(tp) > -1) || String(it.numero) === t || (tel && soDigitos(cli.whatsapp).indexOf(tel) > -1);
     });
   }
 
@@ -324,15 +332,50 @@
   }
 
   /* ---------- armazenamento ---------- */
+  function texto(v, max) { return typeof v === 'string' ? v.slice(0, max) : (typeof v === 'number' ? String(v) : ''); }
+  /* Completa campos opcionais que faltam. Devolve null se faltar o essencial (id, token, etapa conhecida). */
+  function normalizarItem(e, it) {
+    if (!it || typeof it !== 'object' || typeof it.id !== 'string' || !it.id || typeof it.token !== 'string' || !it.token || indiceEtapa(e, it.etapa) < 0) return null;
+    var cli = it.cliente && typeof it.cliente === 'object' ? it.cliente : {};
+    var hist = Array.isArray(it.historico) ? it.historico.filter(function (h) { return h && typeof h.etapa === 'string' && typeof h.quando === 'string'; }) : [];
+    var criado = typeof it.criadoEm === 'string' && !isNaN(new Date(it.criadoEm)) ? it.criadoEm : (hist[0] ? hist[0].quando : new Date().toISOString());
+    return {
+      id: it.id, token: it.token, numero: typeof it.numero === 'number' ? it.numero : 0,
+      cliente: { nome: texto(cli.nome, MAX.nome) || 'Cliente', whatsapp: normalizarWhats(cli.whatsapp) },
+      modelo: texto(it.modelo, MAX.modelo) || '—', cor: texto(it.cor, MAX.cor), placa: normalizarPlaca(it.placa),
+      avarias: Array.isArray(it.avarias) ? it.avarias.filter(function (a) { return typeof a === 'string' && a; }).slice(0, MAX.avarias) : [],
+      previsao: dataValida(it.previsao) ? it.previsao : '', obs: texto(it.obs, MAX.obs),
+      etapa: it.etapa, checks: it.checks && typeof it.checks === 'object' ? it.checks : {}, cancelado: it.cancelado === true,
+      historico: hist.length ? hist : [{ etapa: it.etapa, quem: 'Sistema', quando: criado, acao: 'entrada' }],
+      criadoEm: criado
+    };
+  }
   function valido(e) {
-    return e && e.versao === VERSAO_DADOS && NICHOS[e.nicho] && Array.isArray(e.itens) && typeof e.seq === 'number' &&
-      e.itens.every(function (it) { return it && typeof it.id === 'string' && typeof it.token === 'string' && it.cliente && Array.isArray(it.historico) && Array.isArray(it.avarias) && indiceEtapa(e, it.etapa) > -1; });
+    return !!(e && e.versao === VERSAO_DADOS && NICHOS[e.nicho] && Array.isArray(e.itens) && typeof e.seq === 'number' &&
+      e.itens.every(function (it) { return !!normalizarItem(e, it); }));
   }
+  /* Carrega os dados do aparelho. Registros com problema são consertados quando dá; os que não dá ficam de fora,
+   * mas o original é guardado numa cópia de segurança (não some em silêncio). Devolve null se não houver dados utilizáveis. */
   function carregar(armazem) {
-    try { var e = JSON.parse((armazem || global.localStorage).getItem(CHAVE_DADOS)); return valido(e) ? e : null; } catch (x) { return null; }
+    var a = armazem || global.localStorage, bruto;
+    try { bruto = a.getItem(CHAVE_DADOS); } catch (x) { return null; }
+    if (!bruto) return null;
+    var e;
+    try { e = JSON.parse(bruto); } catch (x) { guardarCopia(a, bruto); return null; }
+    if (!e || e.versao !== VERSAO_DADOS || !NICHOS[e.nicho] || !Array.isArray(e.itens)) { guardarCopia(a, bruto); return null; }
+    var itens = [], descartados = 0;
+    e.itens.forEach(function (it) { var n = normalizarItem(e, it); if (n) itens.push(n); else descartados++; });
+    var maior = itens.reduce(function (m, it) { return Math.max(m, it.numero); }, 0);
+    var estado = { versao: VERSAO_DADOS, nicho: e.nicho, seq: Math.max(typeof e.seq === 'number' ? e.seq : 0, maior + 1), itens: itens };
+    if (descartados) { guardarCopia(a, bruto); estado.avisoCarga = descartados + (descartados === 1 ? ' registro com problema ficou de fora' : ' registros com problema ficaram de fora') + ' (uma cópia foi guardada).'; }
+    return estado;
   }
+  function guardarCopia(a, bruto) { try { a.setItem(CHAVE_DADOS + '_copia', bruto); } catch (x) {} }
   function salvar(estado, armazem) {
-    try { (armazem || global.localStorage).setItem(CHAVE_DADOS, JSON.stringify(estado)); return true; } catch (x) { return false; }
+    try {
+      var copia = {}; for (var k in estado) if (k !== 'avisoCarga') copia[k] = estado[k];
+      (armazem || global.localStorage).setItem(CHAVE_DADOS, JSON.stringify(copia)); return true;
+    } catch (x) { return false; }
   }
 
   global.Etapas = {
@@ -341,7 +384,7 @@
     cfgDe: cfgDe, etapasDe: etapasDe, indiceEtapa: indiceEtapa, etapaAtual: etapaAtual, proximaEtapa: proximaEtapa, finalizado: finalizado,
     checklistDe: checklistDe, marcados: marcados, pendentes: pendentes,
     validarNovo: validarNovo, novoItem: novoItem, marcar: marcar, concluirEtapa: concluirEtapa, voltarEtapa: voltarEtapa, cancelar: cancelar,
-    minutosNaEtapa: minutosNaEtapa, tempoTexto: tempoTexto, atrasado: atrasado, dataISO: dataISO, dataBR: dataBR, horaBR: horaBR,
+    minutosNaEtapa: minutosNaEtapa, tempoTexto: tempoTexto, atrasado: atrasado, dataISO: dataISO, dataValida: dataValida, normalizarItem: normalizarItem, dataBR: dataBR, horaBR: horaBR,
     resumo: resumo, buscar: buscar, linkColaborador: linkColaborador, linkCliente: linkCliente, porToken: porToken, porId: porId,
     descricaoItem: descricaoItem, mensagemCliente: mensagemCliente, linkWhats: linkWhats, linhaDoTempo: linhaDoTempo,
     criarDemo: criarDemo, carregar: carregar, salvar: salvar, valido: valido

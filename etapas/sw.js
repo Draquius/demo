@@ -3,7 +3,7 @@
  * Rede primeiro; o cache só entra sem internet. Guarda apenas os arquivos da lista abaixo
  * (os dados da demo ficam no localStorage do navegador, não aqui).
  */
-const VERSAO = 'etapas-v1';
+const VERSAO = 'etapas-v2';
 const SHELL = ['./', 'index.html', 'qr.js', 'etapas.js', 'app.js', 'estilo.css', 'manifest.webmanifest',
   'icone-192.png', 'icone-512.png', 'apple-touch-icon.png'];
 const URLS_SHELL = new Set(SHELL.map(a => new URL(a, self.registration.scope).pathname));

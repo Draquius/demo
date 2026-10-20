@@ -11,7 +11,13 @@
 
   function esc(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function cfg() { return C.cfgDe(estado); }
-  function gravar() { C.salvar(estado); }
+  /* Avisa quando o aparelho deixa de salvar (memória cheia ou bloqueada); os dados continuam na tela aberta. */
+  function gravar() {
+    var ok = C.salvar(estado);
+    if (!ok && !semArmazenamento) aviso('Não consegui salvar neste aparelho (memória cheia ou bloqueada). O que você fez vale só enquanto esta tela estiver aberta.', 'erro');
+    semArmazenamento = !ok;
+    return ok;
+  }
   function formVazio() { return { modo: 'entrega', endereco: '', pagamento: 'pix', troco: '', observacoes: '', cliente: { nome: '', whatsapp: '' } }; }
   function selo(st) { return '<span class="selo selo-' + esc(st) + '">' + esc(C.rotuloStatus(st)) + '</span>'; }
   function aviso(msg, tipo) {
@@ -42,7 +48,7 @@
   /* ---------------- loja (cliente) ---------------- */
   function telaLoja() {
     var c = cfg();
-    return '<p class="visao">Visão do <strong>cliente</strong>: o catálogo que vai no Instagram, no Google e no status do WhatsApp.</p>' +
+    return '<h1 class="titulo">Faça seu pedido</h1><p class="visao">Visão do <strong>cliente</strong>: o catálogo que vai no Instagram, no Google e no status do WhatsApp.</p>' +
       '<div class="info-loja"><span>Entrega ' + esc(C.formatarMoeda(c.taxaEntrega)) + '</span><span>Pedido mínimo para entrega ' + esc(C.formatarMoeda(c.pedidoMinimo)) + '</span><span>Retirada sem taxa</span></div>' +
       '<nav class="categorias" aria-label="Categorias">' + c.categorias.map(function (cat, i) { return '<a href="#loja" data-cat="' + i + '">' + esc(cat.nome) + '</a>'; }).join('') + '</nav>' +
       c.categorias.map(function (cat, i) {
